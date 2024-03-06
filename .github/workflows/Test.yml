@@ -1,0 +1,36 @@
+---
+name: Test
+
+on:
+  pull_request:
+    branches: [master, dev, draft]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install deps
+        run: |
+          task app:deps
+
+      - name: Build
+        run: |
+          task app:build
+
+      - name: Test
+        run: |
+          task app:test

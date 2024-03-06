@@ -1,0 +1,51 @@
+---
+version: '3'
+
+vars:
+  DEV_FILE: docker-compose.yml
+  PROD_FILE: docker-compose.prod.yml
+tasks:
+
+  build-dev:
+    cmds:
+      - task: build
+        vars:
+          DOCKER_COMPOSE_FILE: "{{.DEV_FILE}}"
+
+  build-prod:
+    cmds:
+      - task: build
+        vars:
+          DOCKER_COMPOSE_FILE: "{{.PROD_FILE}}"
+
+  push-prod:
+    cmds:
+      - task: push
+        vars:
+          DOCKER_COMPOSE_FILE: "{{.PROD_FILE}}"
+
+  serve-dev:
+    dotenv: ['.dev.env']
+    cmds:
+      - docker compose -f {{.DEV_FILE}} up
+
+  serve-prod:
+    dotenv: ['.prod.env', '.prod.db.env']
+    cmds:
+      - docker compose -f {{.PROD_FILE}} up -d --pull always
+      - task: prune
+
+  build:
+    internal: true
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILE}} build
+
+  push:
+    internal: true
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILE}} push
+
+  prune:
+    cmds:
+      - docker container prune -f
+      - docker image prune -f

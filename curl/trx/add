@@ -1,0 +1,28 @@
+#!/bin/bash
+
+API_URL="http://localhost:8080/api/v1"
+USER_URL="trx"
+
+# Проверка наличия аргумента (токена)
+if [ $# -ne 3 ]; then
+    echo "Usage: $0 <budget_from> <budget_to> <token>"
+    exit 1
+fi
+
+FROM="$1"
+TO="$2"
+TOKEN="$3"
+
+# Отправляем PATCH-запрос
+RESPONSE=$(curl -s -X POST $API_URL/$USER_URL \
+        -H "Authorization: Bearer $TOKEN" -d '
+{
+  "amount": "'$RANDOM'",
+  "date": "10-10-2003",
+  "title": "trx_'$RANDOM'",
+  "from": '$FROM',
+  "to": '$TO'
+}
+')
+
+echo $RESPONSE | jq

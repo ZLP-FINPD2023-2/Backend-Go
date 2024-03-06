@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!-- 
+    Это страница для проверки CORS
+
+    Чтобы проверить корс нужно открыть ее в браузере,
+    открыть консоль разработчика, нажать на кнопку.
+    Во вкладке network открыть событие.
+    В отделе Response Headers будет видно,
+    какие настройки CORS применены
+-->
+<html>
+
+<head>
+    <title>CORS Test</title>
+</head>
+
+<body>
+    <button id="fetchButton">Make CORS Request</button>
+    <script>
+        document.getElementById('fetchButton').addEventListener('click', function () {
+            fetch('http://localhost:8080/api/v1/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response from server:', data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,7 @@
+data
+test.db
+.idea
+migrations/sqlite
+docs
+vendor
+.task

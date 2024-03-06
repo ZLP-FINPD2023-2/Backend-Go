@@ -1,0 +1,24 @@
+#!/bin/bash
+
+API_URL="http://localhost:8080/api/v1"
+USER_URL="budget"
+
+# Проверка наличия аргумента (токена)
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <goal_id> <token>"
+    exit 1
+fi
+
+GOAL_ID="$1"
+TOKEN="$2"
+
+# Отправляем PATCH-запрос
+RESPONSE=$(curl -s -X POST $API_URL/$USER_URL \
+        -H "Authorization: Bearer $TOKEN" -d '
+{
+  "title": "Budget_'$RANDOM'",
+  "goal": '$GOAL_ID'
+}
+')
+
+echo $RESPONSE | jq

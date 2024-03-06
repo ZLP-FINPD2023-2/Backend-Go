@@ -1,0 +1,10 @@
+---
+version: '3'
+
+includes:
+  app:
+    taskfile: ./app
+    dir: ./app
+  docker:
+    taskfile: ./taskfiles/Docker.yml
+    dir: .

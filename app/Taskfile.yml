@@ -1,0 +1,52 @@
+---
+version: '3'
+tasks:
+
+  deps:
+    cmds:
+      - go install github.com/swaggo/swag/cmd/swag@latest
+      - go mod tidy
+      - go mod verify
+      - go mod vendor
+    sources:
+      - ./**/*.go
+    generates:
+      - ./go.mod
+      - ./go.sum
+      - ./vendor/**/*
+    status:
+      - type swag
+
+  build-docs:
+    deps: [deps]
+    cmds:
+      - swag init -g ./server.go
+    sources:
+      - ./**/*.go
+      - exclude: ./docs/**/*.go
+    generates:
+      - ./docs/**/*
+
+  build:
+    deps: [build-docs]
+    sources:
+      - ./**/*.go
+    cmds:
+      - go build -v ./...
+
+  test:
+    deps: [build]
+    sources:
+      - ./**/*
+    cmds:
+      - go test -v ./...
+
+  install:
+    deps: [test]
+    cmds:
+      - go build -v -o /usr/local/bin/finapp ./server.go
+
+  serve:
+    deps: [test]
+    cmds:
+      - go run ./... app:serve
