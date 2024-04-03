@@ -6,13 +6,13 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func CustomValidator() *validator.Validate {
+func customValidator() *validator.Validate {
 	v := validator.New()
-	v.RegisterValidation("isNotFutureDate", IsNotFutureDate)
+	v.RegisterValidation("isNotFutureDate", isNotFutureDate)
 	return v
 }
 
-func IsNotFutureDate(fldLvl validator.FieldLevel) bool {
+func isNotFutureDate(fldLvl validator.FieldLevel) bool {
 	dateToValidate, ok := fldLvl.Field().Interface().(time.Time)
 	if !ok {
 		return false

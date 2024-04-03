@@ -18,6 +18,8 @@ func (s TrxRoutes) Setup() {
 	{
 		root.GET("/trx", s.trxController.List)
 		root.POST("/trx", s.trxController.Post)
+		root.PATCH("/trx", s.trxController.Patch)
+		root.DELETE("/trx", s.trxController.Delete)
 	}
 }
 

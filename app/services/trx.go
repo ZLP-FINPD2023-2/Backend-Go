@@ -1,6 +1,8 @@
 package services
 
 import (
+	"errors"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -38,14 +40,7 @@ func (s TrxService) WithTrx(trxHandle *gorm.DB) domains.TrxService {
 }
 
 func (s TrxService) List(c *gin.Context, userID uint) ([]models.Trx, error) {
-	var trxs []models.Trx
-
-	// Создание запроса
-	query := s.repository.Database.Where("user_id = ?", userID)
-
-	// Фильтрация запроса
 	/* TODO: Реализовать фильтрацию по сумме
-
 	if amountMinStr := c.Query("amount_min"); amountMinStr != "" {
 		amountMin, err := decimal.NewFromString(amountMinStr)
 		if err != nil {
@@ -60,27 +55,30 @@ func (s TrxService) List(c *gin.Context, userID uint) ([]models.Trx, error) {
 			return nil, err
 		}
 		query = query.Where("amount <= ?", amountMax)
-	}
-	*/
+	}*/
+	var (
+		dateFrom time.Time
+		dateTo   time.Time
+	)
 
 	if dateFromStr := c.Query("date_from"); dateFromStr != "" {
-		dateFrom, err := time.Parse(constants.DateFormat, dateFromStr)
+		dateFromTemp, err := time.Parse(constants.DateFormat, dateFromStr)
 		if err != nil {
 			return nil, err
 		}
-		query = query.Where("date >= ?", dateFrom)
+		dateFrom = dateFromTemp
 	}
 
 	if dateToStr := c.Query("date_to"); dateToStr != "" {
-		dateTo, err := time.Parse(constants.DateFormat, dateToStr)
+		dateToTemp, err := time.Parse(constants.DateFormat, dateToStr)
 		if err != nil {
 			return nil, err
 		}
-		query = query.Where("date <= ?", dateTo)
+		dateTo = dateToTemp
 	}
 
 	// Выполнение запроса
-	err := query.Find(&trxs).Error
+	trxs, err := s.repository.List(userID, dateFrom, dateTo)
 
 	return trxs, err
 }
@@ -116,4 +114,41 @@ func (s TrxService) Create(trxRequest *models.TrxRequest, userID uint) error {
 	}
 
 	return s.repository.Create(&transaction)
+}
+
+func (s TrxService) Patch(transaction models.TrxPatchRequest, userID uint) error {
+	date, err := time.Parse(constants.DateFormat, transaction.Date)
+	if err != nil {
+		return err
+	}
+
+	amount, err := decimal.NewFromString(transaction.Amount)
+	if err != nil {
+		return err
+	}
+
+	trx := models.Trx{
+		UserID:     userID,
+		Title:      transaction.Title,
+		Date:       date,
+		Amount:     amount,
+		BudgetFrom: transaction.BudgetFrom,
+		BudgetTo:   transaction.BudgetTo,
+	}
+	trx.ID = transaction.ID
+
+	return s.repository.Patch(trx)
+}
+
+func (s TrxService) Delete(c *gin.Context, userID uint) error {
+	queryID := c.Query("id")
+	if queryID == "" {
+		return errors.New("trx id does not exists")
+	}
+	id, err := strconv.Atoi(queryID)
+	if err != nil {
+		return err
+	}
+
+	return s.repository.Delete(uint(id), userID)
 }

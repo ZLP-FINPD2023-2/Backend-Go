@@ -71,3 +71,15 @@ func (r BudgetRepository) Get(id, userID uint) (models.Budget, error) {
 	err := r.Database.Where("user_id = ?", userID).Where("id = ?", id).First(&budget).Error
 	return budget, err
 }
+
+func (r BudgetRepository) Create(budget models.Budget) error {
+	return r.Database.Create(&budget).Error
+}
+
+func (r BudgetRepository) Patch(budget models.Budget) error {
+	return r.Database.Save(&budget).Error
+}
+
+func (r BudgetRepository) Delete(id uint, userID uint) error {
+	return r.Database.Where("user_id = ?", userID).Delete(&models.Budget{}, id).Error
+}

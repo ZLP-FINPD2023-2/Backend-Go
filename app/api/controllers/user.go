@@ -13,34 +13,31 @@ import (
 
 // UserController struct
 type UserController struct {
-	logger      lib.Logger
-	service     domains.UserService
-	authService domains.AuthService
+	logger  lib.Logger
+	service domains.UserService
 }
 
 // NewUserController creates new controller
 func NewUserController(
 	logger lib.Logger,
 	service domains.UserService,
-	userService domains.AuthService,
 ) UserController {
 	return UserController{
-		logger:      logger,
-		service:     service,
-		authService: userService,
+		logger:  logger,
+		service: service,
 	}
 }
 
 // Удаление
 
-//	@Security		ApiKeyAuth
-//	@summary		Delete user
-//	@tags			user
-//	@Description	Удаление пользователя
-//	@ID				delete
-//	@Accept			json
-//	@Produce		json
-//	@Router			/user [delete]
+// @Security		ApiKeyAuth
+// @summary		Delete user
+// @tags			user
+// @Description	Удаление пользователя
+// @ID				delete
+// @Accept			json
+// @Produce		json
+// @Router			/user [delete]
 func (uc UserController) Delete(c *gin.Context) {
 	// Парсинг запроса
 	userId, ok := c.Get(constants.UserID)
@@ -68,14 +65,14 @@ func (uc UserController) Delete(c *gin.Context) {
 
 // Получение
 
-//	@Security		ApiKeyAuth
-//	@summary		Get user
-//	@tags			user
-//	@Description	Получение пользователя
-//	@ID				get
-//	@Accept			json
-//	@Produce		json
-//	@Router			/user [get]
+// @Security		ApiKeyAuth
+// @summary		Get user
+// @tags			user
+// @Description	Получение пользователя
+// @ID				get
+// @Accept			json
+// @Produce		json
+// @Router			/user [get]
 func (uc UserController) Get(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
@@ -107,14 +104,14 @@ func (uc UserController) Get(c *gin.Context) {
 
 // Обновление
 
-//	@Security		ApiKeyAuth
-//	@summary		Update user
-//	@tags			user
-//	@Description	Обновление пользователя
-//	@ID				update
-//	@Accept			json
-//	@Produce		json
-//	@Router			/user [patch]
+// @Security		ApiKeyAuth
+// @summary		Update user
+// @tags			user
+// @Description	Обновление пользователя
+// @ID				update
+// @Accept			json
+// @Produce		json
+// @Router			/user [patch]
 func (uc UserController) Update(c *gin.Context) {
 	c.Status(http.StatusNotImplemented)
 }
