@@ -5,46 +5,46 @@ import (
 
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
-
-	"finapp/lib/validators"
 )
+
+type TrxRequest struct {
+	Title string `json:"title"`
+	// Из-за datetime все может пойти по одному месту
+	Date string `json:"date" validate:"required,datetime,isNotFutureDate"`
+	// Из-за numeric все может пойти по одному месту
+	Amount     string `json:"amount" validate:"required,numeric"`
+	BudgetFrom uint   `json:"from" validate:"required"`
+	BudgetTo   uint   `json:"to" validate:"required"`
+}
+
+type TrxResponse struct {
+	ID         uint            `json:"id"`
+	Title      string          `json:"title"`
+	Date       time.Time       `json:"date"`
+	Amount     decimal.Decimal `json:"amount"`
+	BudgetFrom uint            `json:"from"`
+	BudgetTo   uint            `json:"to"`
+}
+
+type TrxPatchRequest struct {
+	ID         uint   `json:"id" validate:"required"`
+	Title      string `json:"title"`
+	Date       string `json:"date" validate:"datetime"`
+	Amount     string `json:"amount" validate:"numeric"`
+	BudgetFrom uint   `json:"from"`
+	BudgetTo   uint   `json:"to"`
+}
 
 type Trx struct {
 	gorm.Model
-	UserID     uint            `validate:"required"`
-	Title      string          `validate:"required"`
-	Date       time.Time       `validate:"required,isNotFutureDate"`
-	Amount     decimal.Decimal `validate:"required" sql:"type:decimal(20,2);"`
-	BudgetFrom uint            `validate:"required"`
-	BudgetTo   uint            `validate:"required"`
+	UserID     uint
+	Title      string
+	Date       time.Time
+	Amount     decimal.Decimal `sql:"type:decimal(20,2);"`
+	BudgetFrom uint
+	BudgetTo   uint
 }
 
 func (t Trx) TableName() string {
 	return "transactions"
-}
-
-func (trx *Trx) BeforeSave(db *gorm.DB) error {
-	// Валидация
-	validate := validators.CustomValidator()
-	if err := validate.Struct(trx); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-type TrxResponse struct {
-	Title      string          `json:"title"`
-	Date       time.Time       `json:"date"`
-	Amount     decimal.Decimal `json:"amount"`
-	BudgetFrom uint            `validate:"required"`
-	BudgetTo   uint            `validate:"required"`
-}
-
-type TrxRequest struct {
-	Title      string `json:"title"`
-	Date       string `json:"date"`
-	Amount     string `json:"amount"`
-	BudgetFrom uint   `json:"from" validate:"required"`
-	BudgetTo   uint   `json:"to" validate:"required"`
 }

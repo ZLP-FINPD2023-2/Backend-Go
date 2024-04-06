@@ -6,15 +6,27 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func ParseValidationErrors(vErr validator.ValidationErrors) map[string]string {
+func IsValid(model any) error {
+	validate := customValidator()
+	if err := validate.Struct(model); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ParseValidationErrors(err error) map[string]string {
+	vErr, ok := err.(validator.ValidationErrors)
+	if !ok {
+		return nil
+	}
 	errs := make(map[string]string)
 
 	for _, f := range vErr {
-		err := f.ActualTag()
+		currErr := f.ActualTag()
 		if f.Param() != "" {
-			err = fmt.Sprintf("%s=%s", err, f.Param())
+			currErr = fmt.Sprintf("%s=%s", currErr, f.Param())
 		}
-		errs[f.Field()] = err
+		errs[f.Field()] = currErr
 	}
 
 	return errs

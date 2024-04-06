@@ -2,6 +2,7 @@ package repository
 
 import (
 	"gorm.io/gorm"
+	"time"
 
 	"finapp/lib"
 	"finapp/models"
@@ -33,4 +34,21 @@ func (r TrxRepository) WithTrx(trxHandle *gorm.DB) TrxRepository {
 
 func (r TrxRepository) Create(model *models.Trx) error {
 	return r.Database.Create(&model).Error
+}
+
+func (r TrxRepository) List(userID uint, dateFrom time.Time, dateTo time.Time) ([]models.Trx, error) {
+	var trxs []models.Trx
+	query := r.Database.Where("user_id = ?", userID)
+	query = query.Where("date >= ?", dateFrom)
+	query = query.Where("date <= ?", dateTo)
+	err := query.Find(&trxs).Error
+	return trxs, err
+}
+
+func (r TrxRepository) Patch(trx models.Trx) error {
+	return r.Database.Save(&trx).Error
+}
+
+func (r TrxRepository) Delete(id uint, userID uint) error {
+	return r.Database.Where("user_id = ?", userID).Delete(&models.Trx{}, id).Error
 }

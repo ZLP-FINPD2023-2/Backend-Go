@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"finapp/lib/validators"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,20 +14,17 @@ import (
 )
 
 type BudgetController struct {
-	logger      lib.Logger
-	service     domains.BudgetService
-	authService domains.AuthService
+	logger  lib.Logger
+	service domains.BudgetService
 }
 
 func NewBudgetController(
 	logger lib.Logger,
 	service domains.BudgetService,
-	authService domains.AuthService,
 ) BudgetController {
 	return BudgetController{
-		logger:      logger,
-		service:     service,
-		authService: authService,
+		logger:  logger,
+		service: service,
 	}
 }
 
@@ -40,7 +39,7 @@ func NewBudgetController(
 // @Produce		json
 // @Success		200	{array}	models.BudgetGetResponse
 // @Router			/budget [get]
-func (bc BudgetController) Get(c *gin.Context) {
+func (bc BudgetController) List(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -92,6 +91,13 @@ func (bc BudgetController) Post(c *gin.Context) {
 		return
 	}
 
+	if err := validators.IsValid(budget); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": validators.ParseValidationErrors(err),
+		})
+		return
+	}
+
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -109,5 +115,81 @@ func (bc BudgetController) Post(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Budget added successfully",
+	})
+}
+
+// @Security		ApiKeyAuth
+// @summary		Patch budget
+// @tags			budget
+// @Description	Изменение бюджета
+// @ID				budget-patch
+// @Accept			json
+// @Produce		json
+// @Param			budget	body	models.BudgetPatchRequest	true	"Данные бюждета"
+// @Router			/budget [patch]
+func (bc BudgetController) Patch(c *gin.Context) {
+	var budget models.BudgetPatchRequest
+
+	if err := c.ShouldBindJSON(&budget); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	if err := validators.IsValid(budget); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": validators.ParseValidationErrors(err),
+		})
+		return
+	}
+
+	userID, ok := c.Get(constants.UserID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
+		})
+		return
+	}
+
+	if err := bc.service.Patch(budget, userID.(uint)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("failed to update budget: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "budget was updated",
+	})
+}
+
+// @Security		ApiKeyAuth
+// @summary		Delete budget
+// @tags			budget
+// @Description	Удаление бюджета
+// @ID				budget-delete
+// @Accept			json
+// @Produce		json
+// @Param			id	query	integer	false	"id бюджета"
+// @Router			/budget [delete]
+func (bc BudgetController) Delete(c *gin.Context) {
+	userID, ok := c.Get(constants.UserID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
+		})
+		return
+	}
+
+	if err := bc.service.Delete(c, userID.(uint)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("failed to delete budget: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "budget deleted successfully",
 	})
 }

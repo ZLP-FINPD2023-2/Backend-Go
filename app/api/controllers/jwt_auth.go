@@ -37,14 +37,14 @@ func NewJWTAuthController(
 
 // Вход
 
-//	@summary		Login
-//	@tags			auth
-//	@Description	Вход пользователя
-//	@ID				login
-//	@Accept			json
-//	@Produce		json
-//	@Param			req	body	models.LoginRequest	true	"Данные пользователя"
-//	@Router			/auth/login [post]
+// @summary		Login
+// @tags			auth
+// @Description	Вход пользователя
+// @ID				login
+// @Accept			json
+// @Produce		json
+// @Param			req	body	models.LoginRequest	true	"Данные пользователя"
+// @Router			/auth/login [post]
 func (jwt JWTAuthController) Login(c *gin.Context) {
 	// Парсинг запроса
 	var q models.LoginRequest
@@ -53,6 +53,12 @@ func (jwt JWTAuthController) Login(c *gin.Context) {
 			"error": "Invalid request body",
 		})
 		return
+	}
+
+	if err := validators.IsValid(q); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": validators.ParseValidationErrors(err),
+		})
 	}
 
 	// Нахождение пользователя по email пользователя
@@ -90,14 +96,14 @@ func (jwt JWTAuthController) Login(c *gin.Context) {
 
 // Регистрация
 
-//	@summary		Register
-//	@tags			auth
-//	@Description	Регистрация пользователя
-//	@ID				register
-//	@Accept			json
-//	@Produce		json
-//	@Param			user	body	models.RegisterRequest	true	"Данные пользователя"
-//	@Router			/auth/register [post]
+// @summary		Register
+// @tags			auth
+// @Description	Регистрация пользователя
+// @ID				register
+// @Accept			json
+// @Produce		json
+// @Param			user	body	models.RegisterRequest	true	"Данные пользователя"
+// @Router			/auth/register [post]
 func (jwt JWTAuthController) Register(c *gin.Context) {
 	// Парсинг запроса
 	var q models.RegisterRequest

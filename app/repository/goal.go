@@ -43,7 +43,8 @@ func (r GoalRepository) List(userID uint) ([]models.GoalCalc, error) {
 		"goals.deleted_at,"+
 		"goals.user_id,"+
 		"goals.title,"+
-		"COALESCE(SUM(t3.amount), 0) AS total_amount "+
+		"COALESCE(SUM(t3.amount), 0) AS total_amount,"+
+		"goals.target_amount "+
 		"FROM goals "+
 		"JOIN "+
 		"(SELECT "+
@@ -80,4 +81,16 @@ func (r GoalRepository) List(userID uint) ([]models.GoalCalc, error) {
 		goals = append(goals, temp)
 	}
 	return goals, err
+}
+
+func (r GoalRepository) Create(goal models.Goal) error {
+	return r.Database.Create(&goal).Error
+}
+
+func (r GoalRepository) Patch(goal models.Goal) error {
+	return r.Database.Save(&goal).Error
+}
+
+func (r GoalRepository) Delete(id uint, userID uint) error {
+	return r.Database.Where("user_id = ?", userID).Delete(&models.Goal{}, id).Error
 }

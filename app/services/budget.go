@@ -1,7 +1,10 @@
 package services
 
 import (
+	"errors"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"strconv"
 
 	"finapp/domains"
 	"finapp/lib"
@@ -51,5 +54,29 @@ func (s BudgetService) Create(request *models.BudgetCreateRequest, userID uint) 
 		Goal:   request.Goal,
 	}
 
-	return s.repository.Database.Create(&transaction).Error
+	return s.repository.Create(transaction)
+}
+
+func (s BudgetService) Patch(budget models.BudgetPatchRequest, userID uint) error {
+	updateBudget := models.Budget{
+		UserID: userID,
+		Title:  budget.Title,
+		Goal:   budget.Goal,
+	}
+	updateBudget.ID = budget.ID
+
+	return s.repository.Patch(updateBudget)
+}
+
+func (s BudgetService) Delete(c *gin.Context, userID uint) error {
+	queryID := c.Query("id")
+	if queryID == "" {
+		return errors.New("trx id does not exists")
+	}
+	id, err := strconv.Atoi(queryID)
+	if err != nil {
+		return err
+	}
+
+	return s.repository.Delete(uint(id), userID)
 }
