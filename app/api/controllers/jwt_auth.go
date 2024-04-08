@@ -59,6 +59,7 @@ func (jwt JWTAuthController) Login(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"error": validators.ParseValidationErrors(err),
 		})
+		return
 	}
 
 	// Нахождение пользователя по email пользователя

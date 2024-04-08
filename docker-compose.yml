@@ -5,8 +5,8 @@ name: backend
 services:
   web:
     build:
+      dockerfile: ../Dockerfile
       context: ./app
-      dockerfile: ./docker/Dockerfile
     command: ./finapp app:serve
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}

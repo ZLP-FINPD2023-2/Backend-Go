@@ -30,6 +30,7 @@ func NewBudgetController(
 
 // Получение
 
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Get budgets
 // @tags			budget
@@ -72,6 +73,7 @@ func (bc BudgetController) List(c *gin.Context) {
 
 // Создание
 
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Create budget
 // @tags			budget
@@ -118,6 +120,9 @@ func (bc BudgetController) Post(c *gin.Context) {
 	})
 }
 
+// Обновление
+
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Patch budget
 // @tags			budget
@@ -164,6 +169,9 @@ func (bc BudgetController) Patch(c *gin.Context) {
 	})
 }
 
+// Удаление
+
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Delete budget
 // @tags			budget

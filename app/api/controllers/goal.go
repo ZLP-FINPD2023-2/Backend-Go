@@ -30,6 +30,7 @@ func NewGoalController(
 
 // Получение
 
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		List goals
 // @tags			goal
@@ -119,6 +120,9 @@ func (gc GoalController) Create(c *gin.Context) {
 	})
 }
 
+// Обновление
+
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Patch goal
 // @tags			goal
@@ -165,6 +169,9 @@ func (gc GoalController) Patch(c *gin.Context) {
 	})
 }
 
+// Удаление
+
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Delete goal
 // @tags			goal

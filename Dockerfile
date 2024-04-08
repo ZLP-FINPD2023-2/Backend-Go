@@ -12,8 +12,13 @@ WORKDIR /usr/src/finapp
 ENV CGO_ENABLED 0
 ENV GOOS linux
 
-# Установка зависимостей
+# Установка Go Task
 RUN go install github.com/go-task/task/v3/cmd/task@latest
+COPY ./Taskfile.yml ./
+
+# Установка зависимостей
+COPY ./go.mod ./go.sum ./
+RUN task deps
 
 # Копирование проекта
 COPY . ./
@@ -41,7 +46,7 @@ RUN mkdir $APP_HOME
 WORKDIR $APP_HOME
 
 # Копирование entrypoint.sh
-COPY docker/entrypoint.sh $APP_HOME
+COPY ./entrypoint.sh $APP_HOME
 RUN sed -i 's/\r$//g' $APP_HOME/entrypoint.sh && chmod +x $APP_HOME/entrypoint.sh
 
 # Установка приложения и передача владения файлами пользовалелю app
