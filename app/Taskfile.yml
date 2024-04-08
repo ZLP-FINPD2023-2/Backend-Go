@@ -1,10 +1,8 @@
 ---
 version: '3'
 tasks:
-
-  deps:
+  tidy:
     cmds:
-      - go install github.com/swaggo/swag/cmd/swag@latest
       - go mod tidy
       - go mod verify
       - go mod vendor
@@ -14,6 +12,14 @@ tasks:
       - ./go.mod
       - ./go.sum
       - ./vendor/**/*
+
+  deps:
+    cmds:
+      - go install github.com/swaggo/swag/cmd/swag@latest
+      - go mod download
+    sources:
+      - ./go.mod
+      - ./go.sum
     status:
       - type swag
 
