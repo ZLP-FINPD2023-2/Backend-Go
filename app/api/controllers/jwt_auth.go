@@ -1,13 +1,9 @@
 package controllers
 
 import (
-	"errors"
-	"net/http"
-	"strings"
-
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
+	"net/http"
 
 	"finapp/domains"
 	"finapp/lib"
@@ -59,6 +55,7 @@ func (jwt JWTAuthController) Login(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"error": validators.ParseValidationErrors(err),
 		})
+		return
 	}
 
 	// Нахождение пользователя по email пользователя
@@ -114,48 +111,22 @@ func (jwt JWTAuthController) Register(c *gin.Context) {
 		return
 	}
 
+	if err := validators.IsValid(q); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": validators.ParseValidationErrors(err),
+		})
+		return
+	}
+
 	// Регистрация пользователя
-	if err := jwt.userService.Register(&q); err != nil {
-		// Ошибки валидации
-		var vErr validator.ValidationErrors
-		if errors.As(err, &vErr) {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": validators.ParseValidationErrors(vErr),
-			})
-			return
-		}
-
-		// Ошибка уникального значения
-		// TODO: Придумать обработчик получше
-		// Реально надо получше, а то это кринж
-		if strings.Contains(err.Error(), "UNIQUE") || strings.Contains(err.Error(), "duplicate") {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": gin.H{
-					"Email": "duplicate",
-				},
-			})
-			return
-		}
-
-		// Ошибка парсинга даты
-		if strings.Contains(err.Error(), "parsing time") {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": gin.H{
-					"birthday": "parse failed",
-				},
-			})
-			return
-		}
-
-		// Необработанные ошибки
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Validation failed",
+	user, err := jwt.userService.Register(&q)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to register user",
 		})
 		return
 	}
 
 	// Отправка ответа
-	c.JSON(http.StatusOK, gin.H{
-		"message": "User registered successfully",
-	})
+	c.JSON(http.StatusOK, user)
 }

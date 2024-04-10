@@ -99,6 +99,7 @@ func (tc TrxController) Post(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"error": validators.ParseValidationErrors(err),
 		})
+		return
 	}
 
 	userID, ok := c.Get(constants.UserID)
@@ -143,6 +144,7 @@ func (tc TrxController) Patch(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"error": validators.ParseValidationErrors(err),
 		})
+		return
 	}
 
 	userID, ok := c.Get(constants.UserID)
@@ -157,6 +159,7 @@ func (tc TrxController) Patch(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("failed to update trx: %s", err.Error()),
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -186,6 +189,7 @@ func (tc TrxController) Delete(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("failed to delete trx: %s", err.Error()),
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{

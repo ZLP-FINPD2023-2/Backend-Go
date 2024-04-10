@@ -31,12 +31,49 @@ func NewBudgetController(
 // Получение
 
 // @Security		ApiKeyAuth
-// @summary		Get budgets
+// @summary		Get budget
 // @tags			budget
-// @Description	Получение бюджетов
+// @Description	Получение бюджета
 // @ID				budget-get
 // @Accept			json
 // @Produce		json
+// @Param			date_from	query	string	false	"Дата начала периода в формате 18-10-2004"
+// @Param			date_to		query	string	false	"Дата окончания периода в формате 18-10-2004"
+// @Success		200	{object}	models.BudgetGetResponse
+// @Router			/budget/:id [get]
+func (bc BudgetController) Get(c *gin.Context) {
+	userID, ok := c.Get(constants.UserID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
+		})
+		return
+	}
+
+	budget, err := bc.service.Get(c, userID.(uint))
+	// TODO: Улучшить обработку ошибок
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":       "Failed to get budgets",
+			"description": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, budget)
+}
+
+// Получение
+
+// @Security		ApiKeyAuth
+// @summary		List budgets
+// @tags			budget
+// @Description	Получение бюджетов
+// @ID				budget-list
+// @Accept			json
+// @Produce		json
+// @Param			date_from	query	string	false	"Дата начала периода в формате 18-10-2004"
+// @Param			date_to		query	string	false	"Дата окончания периода в формате 18-10-2004"
 // @Success		200	{array}	models.BudgetGetResponse
 // @Router			/budget [get]
 func (bc BudgetController) List(c *gin.Context) {
@@ -48,7 +85,7 @@ func (bc BudgetController) List(c *gin.Context) {
 		return
 	}
 
-	budgets, err := bc.service.List(userID.(uint))
+	budgets, err := bc.service.List(c, userID.(uint))
 	// TODO: Улучшить обработку ошибок
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -58,16 +95,7 @@ func (bc BudgetController) List(c *gin.Context) {
 		return
 	}
 
-	var budgetResponses []models.BudgetGetResponse
-	for _, budget := range budgets {
-		budgetResponses = append(budgetResponses, models.BudgetGetResponse{
-			Title:  budget.Title,
-			ID:     budget.ID,
-			Amount: budget.Amount,
-		})
-	}
-
-	c.JSON(http.StatusOK, budgetResponses)
+	c.JSON(http.StatusOK, budgets)
 }
 
 // Создание
@@ -80,6 +108,7 @@ func (bc BudgetController) List(c *gin.Context) {
 // @Accept			json
 // @Produce		json
 // @Param			budget	body	models.BudgetCreateRequest	true	"Данные бюждета"
+// @Success		200	{object}	models.BudgetCreateResponse
 // @Router			/budget [post]
 func (bc BudgetController) Post(c *gin.Context) {
 	var budget models.BudgetCreateRequest
@@ -106,16 +135,14 @@ func (bc BudgetController) Post(c *gin.Context) {
 		return
 	}
 
-	err := bc.service.Create(&budget, userID.(uint))
+	resp, err := bc.service.Create(&budget, userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Budget added successfully",
-	})
+	c.JSON(http.StatusOK, resp)
 }
 
 // @Security		ApiKeyAuth
@@ -126,6 +153,7 @@ func (bc BudgetController) Post(c *gin.Context) {
 // @Accept			json
 // @Produce		json
 // @Param			budget	body	models.BudgetPatchRequest	true	"Данные бюждета"
+// @Success		200	{object}	models.BudgetPatchResponse
 // @Router			/budget [patch]
 func (bc BudgetController) Patch(c *gin.Context) {
 	var budget models.BudgetPatchRequest
@@ -152,16 +180,15 @@ func (bc BudgetController) Patch(c *gin.Context) {
 		return
 	}
 
-	if err := bc.service.Patch(budget, userID.(uint)); err != nil {
+	newBudget, err := bc.service.Patch(budget, userID.(uint))
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("failed to update budget: %s", err.Error()),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "budget was updated",
-	})
+	c.JSON(http.StatusOK, newBudget)
 }
 
 // @Security		ApiKeyAuth
@@ -171,8 +198,7 @@ func (bc BudgetController) Patch(c *gin.Context) {
 // @ID				budget-delete
 // @Accept			json
 // @Produce		json
-// @Param			id	query	integer	false	"id бюджета"
-// @Router			/budget [delete]
+// @Router			/budget/:id [delete]
 func (bc BudgetController) Delete(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {

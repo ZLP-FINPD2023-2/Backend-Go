@@ -15,7 +15,7 @@ const (
 )
 
 // Структура ответа на GET запрос
-type GetResponse struct {
+type UserGetResponse struct {
 	Email      *string `json:"email"`
 	First_name string  `json:"first_name"`
 	Last_name  string  `json:"last_name"`

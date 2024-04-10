@@ -90,7 +90,7 @@ func (uc UserController) Get(c *gin.Context) {
 		return
 	}
 
-	response := models.GetResponse{
+	response := models.UserGetResponse{
 		Email:      user.Email,
 		First_name: user.FirstName,
 		Last_name:  user.LastName,

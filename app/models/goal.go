@@ -27,14 +27,14 @@ type GoalPatchRequest struct {
 type Goal struct {
 	gorm.Model
 	UserID       uint
-	Title        string          `gorm:"unique"`
+	Title        string
 	TargetAmount decimal.Decimal `sql:"type:decimal(20,2);"`
 }
 
 type GoalCalc struct {
 	gorm.Model
 	UserID       uint
-	Title        string          `gorm:"unique"`
+	Title        string
 	Amount       decimal.Decimal `sql:"type:decimal(20,2);"`
 	TargetAmount decimal.Decimal `sql:"type:decimal(20,2);"`
 }

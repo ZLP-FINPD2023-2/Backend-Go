@@ -45,6 +45,16 @@ func (r TrxRepository) List(userID uint, dateFrom time.Time, dateTo time.Time) (
 	return trxs, err
 }
 
+func (r TrxRepository) ListFromBudget(budgetID, userID uint, dateFrom time.Time, dateTo time.Time) ([]models.Trx, error) {
+	var trxs []models.Trx
+	query := r.Database.Where("user_id = ?", userID)
+	query = query.Where("date > ?", dateFrom)
+	query = query.Where("date <= ?", dateTo)
+	query.Where("budget_from = ? OR budget_to = ?", budgetID, budgetID)
+	err := query.Find(&trxs).Error
+	return trxs, err
+}
+
 func (r TrxRepository) Patch(trx models.Trx) error {
 	return r.Database.Save(&trx).Error
 }
