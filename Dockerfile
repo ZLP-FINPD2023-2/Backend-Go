@@ -6,20 +6,23 @@
 FROM golang:alpine as builder
 
 # Установка рабочей директории
-WORKDIR /usr/src/finapp
+WORKDIR /usr/src/app
 
 # Установка переменных окружения
 ENV CGO_ENABLED 0
 ENV GOOS linux
 
 # Установка зависимостей
-RUN go install github.com/go-task/task/v3/cmd/task@latest
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+COPY ./go.mod ./go.sum ./
+RUN go mod download && go mod verify
 
 # Копирование проекта
 COPY . ./
 
-# Установка приложения
-RUN task install
+# Сборка
+RUN swag init -g server.go \
+  && go build -v -o /usr/local/bin/finapp ./server.go
 
 #########
 # FINAL #
@@ -28,20 +31,15 @@ RUN task install
 # Скачивание образа
 FROM alpine:3
 
-# Создание директории для пользователя app
-RUN mkdir -p /home/app
+# Установка рабочей директории
+ENV APP_HOME=/home/app
+WORKDIR $APP_HOME
 
 # Создание пользователя app
 RUN addgroup -S app && adduser -S app -G app
 
-# Создание каталогов
-ENV HOME=/home/app
-ENV APP_HOME=/home/app/web
-RUN mkdir $APP_HOME
-WORKDIR $APP_HOME
-
 # Копирование entrypoint.sh
-COPY docker/entrypoint.sh $APP_HOME
+COPY ./entrypoint.sh $APP_HOME
 RUN sed -i 's/\r$//g' $APP_HOME/entrypoint.sh && chmod +x $APP_HOME/entrypoint.sh
 
 # Установка приложения и передача владения файлами пользовалелю app
@@ -52,4 +50,4 @@ RUN chmod +x $APP_HOME/finapp && chown -R app:app $APP_HOME
 USER app
 
 # Запуск
-ENTRYPOINT ["/home/app/web/entrypoint.sh"]
+ENTRYPOINT ["/home/app/entrypoint.sh"]

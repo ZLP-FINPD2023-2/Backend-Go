@@ -8,13 +8,13 @@ import (
 
 // Module exports dependency to container
 var Module = fx.Options(
+	fx.Provide(NewRoutes),
+	fx.Provide(NewDocsRoutes),
 	fx.Provide(NewAuthRoutes),
 	fx.Provide(NewUserRoutes),
-	fx.Provide(NewTrxRoutes),
-	fx.Provide(NewBudgetRoutes),
 	fx.Provide(NewGoalRoutes),
-	fx.Provide(NewDocsRoutes),
-	fx.Provide(NewRoutes),
+	//fx.Provide(NewBudgetRoutes),
+	//fx.Provide(NewTrxRoutes),
 )
 
 // Routes contains multiple routes
@@ -27,20 +27,20 @@ type Route interface {
 
 // NewRoutes sets up routes
 func NewRoutes(
+	docsRoutes DocsRoutes,
 	authRoutes AuthRoutes,
 	userRoutes UserRoutes,
-	trxRoutes TrxRoutes,
-	budgetRoutes BudgetRoutes,
 	goalRoutes GoalRoutes,
-	docsRoutes DocsRoutes,
+	//budgetRoutes BudgetRoutes,
+	//trxRoutes TrxRoutes,
 ) Routes {
 	return Routes{
+		docsRoutes,
 		authRoutes,
 		userRoutes,
-		trxRoutes,
-		budgetRoutes,
 		goalRoutes,
-		docsRoutes,
+		//budgetRoutes,
+		//trxRoutes,
 	}
 }
 

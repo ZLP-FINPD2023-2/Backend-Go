@@ -104,6 +104,7 @@ func (uc UserController) Get(c *gin.Context) {
 
 // Обновление
 
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Update user
 // @tags			user

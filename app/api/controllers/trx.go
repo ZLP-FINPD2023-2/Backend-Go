@@ -30,6 +30,7 @@ func NewTrxController(
 
 // Получение
 
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		List trx
 // @tags			trx
@@ -76,6 +77,7 @@ func (tc TrxController) List(c *gin.Context) {
 
 // Создание
 
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Create trx
 // @tags			trx
@@ -122,6 +124,9 @@ func (tc TrxController) Post(c *gin.Context) {
 	})
 }
 
+// Обновление
+
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Patch trx
 // @tags			trx
@@ -167,6 +172,9 @@ func (tc TrxController) Patch(c *gin.Context) {
 	})
 }
 
+// Удаление
+
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Delete trx
 // @tags			trx

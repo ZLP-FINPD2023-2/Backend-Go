@@ -30,6 +30,7 @@ func NewBudgetController(
 
 // Получение
 
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Get budget
 // @tags			budget
@@ -100,6 +101,7 @@ func (bc BudgetController) List(c *gin.Context) {
 
 // Создание
 
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Create budget
 // @tags			budget
@@ -145,6 +147,9 @@ func (bc BudgetController) Post(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// Обновление
+
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Patch budget
 // @tags			budget
@@ -191,6 +196,9 @@ func (bc BudgetController) Patch(c *gin.Context) {
 	c.JSON(http.StatusOK, newBudget)
 }
 
+// Удаление
+
+// @Deprecated
 // @Security		ApiKeyAuth
 // @summary		Delete budget
 // @tags			budget

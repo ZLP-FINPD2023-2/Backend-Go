@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"finapp/models"
@@ -29,14 +28,7 @@ func NewDatabase(env Env, logger Logger) Database {
 		Logger: logger.GetGormLogger(),
 	})
 	if err != nil {
-		logger.Info("Connect to sqlite...")
-		dsn := "test.db"
-		db, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{
-			Logger: logger.GetGormLogger(),
-		})
-		if err != nil {
-			logger.Panic("Can't open DB: ", err.Error())
-		}
+		logger.Panic("Can't open DB: ", err.Error())
 	}
 	logger.Info("Connected to database")
 

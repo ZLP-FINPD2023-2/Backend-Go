@@ -3,7 +3,9 @@ name: CI
 
 on:
   push:
-    branches: [master, dev]
+    branches: 
+      - 'master'
+      - 'dev'
 
 env:
   REGISTRY: ghcr.io
@@ -38,7 +40,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./app
-          file: ./app/docker/Dockerfile
+          file: ./Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
