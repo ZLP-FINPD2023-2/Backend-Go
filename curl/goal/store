@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+# Base
+if ! source "${BASH_SOURCE%/*}/../base"; then
+  exit 1
+fi
+
+token=${USER_TOKEN:-$("${BASH_SOURCE%/*}"/../auth/register | jq -r '.token')}
+
+# Отправляем POST-запрос для создания цели
+res=$(curl -s -X POST "$api_url/$goal_url" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $token" \
+  -d \
+  '{
+    "title": "Велосипед_'"$RANDOM"'",
+    "target_amount": "'"$RANDOM"'"
+  }'
+)
+
+# Проверяем, успешно ли создание
+if echo "$res" | jq -re '.error' 1>/dev/null 2>&1; then
+    echo "$res" | jq
+    exit 1
+fi
+
+# Результат
+echo "$res" | jq
