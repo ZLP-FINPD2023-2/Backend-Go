@@ -7,6 +7,6 @@ var Module = fx.Options(
 	fx.Provide(NewJWTAuthController),
 	fx.Provide(NewUserController),
 	fx.Provide(NewGoalController),
-	//fx.Provide(NewBudgetController),
-	//fx.Provide(NewTrxController),
+	fx.Provide(NewBudgetController),
+	fx.Provide(NewTrxController),
 )

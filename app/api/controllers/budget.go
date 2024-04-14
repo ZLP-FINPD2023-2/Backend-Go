@@ -31,17 +31,17 @@ func NewBudgetController(
 // Получение
 
 // @Deprecated
-// @Security		ApiKeyAuth
-// @summary		Get budget
-// @tags			budget
-// @Description	Получение бюджета
-// @ID				budget-get
-// @Accept			json
-// @Produce		json
-// @Param			date_from	query	string	false	"Дата начала периода в формате 18-10-2004"
-// @Param			date_to		query	string	false	"Дата окончания периода в формате 18-10-2004"
-// @Success		200	{object}	models.BudgetGetResponse
-// @Router			/budget/:id [get]
+// @Security ApiKeyAuth
+// @summary Get budget
+// @tags budget
+// @Description Получение бюджета
+// @ID budget-get
+// @Accept json
+// @Produce json
+// @Param date_from query string false "Дата начала периода в формате 18-10-2004"
+// @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
+// @Success 200 {object} models.BudgetGetResponse
+// @Router /budget/:id [get]
 func (bc BudgetController) Get(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
@@ -66,17 +66,17 @@ func (bc BudgetController) Get(c *gin.Context) {
 
 // Получение
 
-// @Security		ApiKeyAuth
-// @summary		List budgets
-// @tags			budget
-// @Description	Получение бюджетов
-// @ID				budget-list
-// @Accept			json
-// @Produce		json
-// @Param			date_from	query	string	false	"Дата начала периода в формате 18-10-2004"
-// @Param			date_to		query	string	false	"Дата окончания периода в формате 18-10-2004"
-// @Success		200	{array}	models.BudgetGetResponse
-// @Router			/budget [get]
+// @Security ApiKeyAuth
+// @summary List budgets
+// @tags budget
+// @Description Получение бюджетов
+// @ID budget-list
+// @Accept json
+// @Produce json
+// @Param date_from query string false "Дата начала периода в формате 18-10-2004"
+// @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
+// @Success 200 {array} models.BudgetGetResponse
+// @Router /budget [get]
 func (bc BudgetController) List(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
@@ -102,16 +102,16 @@ func (bc BudgetController) List(c *gin.Context) {
 // Создание
 
 // @Deprecated
-// @Security		ApiKeyAuth
-// @summary		Create budget
-// @tags			budget
-// @Description	Создание бюджета
-// @ID				budget-create
-// @Accept			json
-// @Produce		json
-// @Param			budget	body	models.BudgetCreateRequest	true	"Данные бюждета"
-// @Success		200	{object}	models.BudgetCreateResponse
-// @Router			/budget [post]
+// @Security ApiKeyAuth
+// @summary Create budget
+// @tags budget
+// @Description Создание бюджета
+// @ID budget-create
+// @Accept json
+// @Produce json
+// @Param budget body models.BudgetCreateRequest true "Данные бюждета"
+// @Success 200 {object} models.BudgetCreateResponse
+// @Router /budget [post]
 func (bc BudgetController) Post(c *gin.Context) {
 	var budget models.BudgetCreateRequest
 
@@ -150,16 +150,16 @@ func (bc BudgetController) Post(c *gin.Context) {
 // Обновление
 
 // @Deprecated
-// @Security		ApiKeyAuth
-// @summary		Patch budget
-// @tags			budget
-// @Description	Изменение бюджета
-// @ID				budget-patch
-// @Accept			json
-// @Produce		json
-// @Param			budget	body	models.BudgetPatchRequest	true	"Данные бюждета"
-// @Success		200	{object}	models.BudgetPatchResponse
-// @Router			/budget [patch]
+// @Security ApiKeyAuth
+// @summary Patch budget
+// @tags budget
+// @Description Изменение бюджета
+// @ID budget-patch
+// @Accept json
+// @Produce json
+// @Param budget body models.BudgetPatchRequest true "Данные бюждета"
+// @Success 200 {object} models.BudgetPatchResponse
+// @Router /budget [patch]
 func (bc BudgetController) Patch(c *gin.Context) {
 	var budget models.BudgetPatchRequest
 
@@ -199,14 +199,14 @@ func (bc BudgetController) Patch(c *gin.Context) {
 // Удаление
 
 // @Deprecated
-// @Security		ApiKeyAuth
-// @summary		Delete budget
-// @tags			budget
-// @Description	Удаление бюджета
-// @ID				budget-delete
-// @Accept			json
-// @Produce		json
-// @Router			/budget/:id [delete]
+// @Security ApiKeyAuth
+// @summary Delete budget
+// @tags budget
+// @Description Удаление бюджета
+// @ID budget-delete
+// @Accept json
+// @Produce json
+// @Router /budget/:id [delete]
 func (bc BudgetController) Delete(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {

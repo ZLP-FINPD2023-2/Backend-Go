@@ -31,15 +31,15 @@ func NewGoalController(
 // Получение
 
 // @Deprecated
-// @Security		ApiKeyAuth
-// @summary		List goals
-// @tags			goal
-// @Description	Получение бюджетов
-// @ID				goal-list
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}	models.GoalGetResponse
-// @Router			/goal [get]
+// @Security ApiKeyAuth
+// @summary List goals
+// @tags goal
+// @Description Получение бюджетов
+// @ID goal-list
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.GoalGetResponse
+// @Router /goal [get]
 func (gc GoalController) List(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
@@ -73,15 +73,15 @@ func (gc GoalController) List(c *gin.Context) {
 
 // Создание
 
-// @Security		ApiKeyAuth
-// @summary		Create goal
-// @tags			goal
-// @Description	Создание цели
-// @ID				goal-create
-// @Accept			json
-// @Produce		json
-// @Param			goal	body	models.GoalCreateRequest	true	"Данные бюждета"
-// @Router			/goal [post]
+// @Security ApiKeyAuth
+// @summary Create goal
+// @tags goal
+// @Description Создание цели
+// @ID goal-create
+// @Accept json
+// @Produce json
+// @Param goal body models.GoalCreateRequest true "Данные бюждета"
+// @Router /goal [post]
 func (gc GoalController) Create(c *gin.Context) {
 	var goal models.GoalCreateRequest
 
@@ -123,15 +123,15 @@ func (gc GoalController) Create(c *gin.Context) {
 // Обновление
 
 // @Deprecated
-// @Security		ApiKeyAuth
-// @summary		Patch goal
-// @tags			goal
-// @Description	Изменение цели
-// @ID				goal-patch
-// @Accept			json
-// @Produce		json
-// @Param			goal	body	models.GoalPatchRequest	true	"Данные цели"
-// @Router			/goal [patch]
+// @Security ApiKeyAuth
+// @summary Patch goal
+// @tags goal
+// @Description Изменение цели
+// @ID goal-patch
+// @Accept json
+// @Produce json
+// @Param goal body models.GoalPatchRequest true "Данные цели"
+// @Router /goal [patch]
 func (gc GoalController) Patch(c *gin.Context) {
 	var goal models.GoalPatchRequest
 
@@ -172,15 +172,15 @@ func (gc GoalController) Patch(c *gin.Context) {
 // Удаление
 
 // @Deprecated
-// @Security		ApiKeyAuth
-// @summary		Delete goal
-// @tags			goal
-// @Description	Удаление цели
-// @ID				goal-delete
-// @Accept			json
-// @Produce		json
-// @Param			id	query	integer	false	"id бюджета"
-// @Router			/goal [delete]
+// @Security ApiKeyAuth
+// @summary Delete goal
+// @tags goal
+// @Description Удаление цели
+// @ID goal-delete
+// @Accept json
+// @Produce json
+// @Param id query integer false "id бюджета"
+// @Router /goal [delete]
 func (gc GoalController) Delete(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
