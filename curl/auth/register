@@ -6,7 +6,7 @@ if ! source "${BASH_SOURCE%/*}/../base"; then
 fi
 
 # Отправляем POST-запрос для регистрации пользователя
-req=$(curl -s -X POST "$api_url/$register_url" \
+res=$(curl -s -X POST "$api_url/$register_url" \
   -H "Content-Type: application/json" \
   -d \
   '{
@@ -20,13 +20,13 @@ req=$(curl -s -X POST "$api_url/$register_url" \
 )
 
 # Проверяем, успешна ли регистрация
-if ! echo "$req" | jq -r '.token' 1>/dev/null 2>&1; then
-    echo "$req" | jq
+if ! echo "$res" | jq -r '.token' 1>/dev/null 2>&1; then
+    echo "$res" | jq
     exit 1
 fi
 
 # Отправляем POST-запрос для авторизации пользователя
-req=$(curl -s -X POST "$api_url/$login_url" \
+res=$(curl -s -X POST "$api_url/$login_url" \
   -H "Content-Type: application/json" \
   -d \
   '{
@@ -36,9 +36,9 @@ req=$(curl -s -X POST "$api_url/$login_url" \
 )
 
 # Проверяем, успешна ли авторизация
-if ! echo "$req" | jq -r '.token' 1>/dev/null 2>&1; then
-    echo "$req" | jq
+if ! echo "$res" | jq -r '.token' 1>/dev/null 2>&1; then
+    echo "$res" | jq
     exit 1
 fi
 
-echo "$req" | jq
+echo "$res" | jq
