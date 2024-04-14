@@ -17,8 +17,8 @@ func (s GoalRoutes) Setup() {
 	root := s.handler.Gin.Group("/api/v1").Use(s.authMiddleware.Handler())
 	{
 		root.GET("/goal", s.controller.List)
-		root.POST("/goal", s.controller.Create)
-		root.PATCH("/goal", s.controller.Patch)
+		root.POST("/goal", s.controller.Store)
+		root.PATCH("/goal", s.controller.Update)
 		root.DELETE("/goal", s.controller.Delete)
 	}
 }

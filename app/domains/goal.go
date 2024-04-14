@@ -10,7 +10,7 @@ import (
 type GoalService interface {
 	WithTrx(trxHandle *gorm.DB) GoalService
 	List(userID uint) ([]models.GoalCalc, error)
-	Create(request *models.GoalCreateRequest, userID uint) error
-	Patch(req models.GoalPatchRequest, userID uint) error
+	Store(request *models.GoalStoreRequest, userID uint) error
+	Update(req models.GoalUpdateRequest, userID uint) error
 	Delete(c *gin.Context, userID uint) error
 }

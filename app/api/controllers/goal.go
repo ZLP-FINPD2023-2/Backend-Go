@@ -38,7 +38,7 @@ func NewGoalController(
 // @ID goal-list
 // @Accept json
 // @Produce json
-// @Success 200 {array} models.GoalGetResponse
+// @Success 200 {array} models.GoalListResponse
 // @Router /goal [get]
 func (gc GoalController) List(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
@@ -59,9 +59,9 @@ func (gc GoalController) List(c *gin.Context) {
 		return
 	}
 
-	var goalResponses []models.GoalGetResponse
+	var goalResponses []models.GoalListResponse
 	for _, goal := range goals {
-		goalResponses = append(goalResponses, models.GoalGetResponse{
+		goalResponses = append(goalResponses, models.GoalListResponse{
 			Title:  goal.Title,
 			ID:     goal.ID,
 			Amount: goal.Amount,
@@ -74,16 +74,16 @@ func (gc GoalController) List(c *gin.Context) {
 // Создание
 
 // @Security ApiKeyAuth
-// @summary Create goal
+// @summary Store goal
 // @tags goal
 // @Description Создание цели
 // @ID goal-create
 // @Accept json
 // @Produce json
-// @Param goal body models.GoalCreateRequest true "Данные бюждета"
+// @Param goal body models.GoalStoreRequest true "Данные бюждета"
 // @Router /goal [post]
-func (gc GoalController) Create(c *gin.Context) {
-	var goal models.GoalCreateRequest
+func (gc GoalController) Store(c *gin.Context) {
+	var goal models.GoalStoreRequest
 
 	if err := c.ShouldBindJSON(&goal); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -107,7 +107,7 @@ func (gc GoalController) Create(c *gin.Context) {
 		return
 	}
 
-	err := gc.service.Create(&goal, userID.(uint))
+	err := gc.service.Store(&goal, userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -124,16 +124,16 @@ func (gc GoalController) Create(c *gin.Context) {
 
 // @Deprecated
 // @Security ApiKeyAuth
-// @summary Patch goal
+// @summary Update goal
 // @tags goal
 // @Description Изменение цели
 // @ID goal-patch
 // @Accept json
 // @Produce json
-// @Param goal body models.GoalPatchRequest true "Данные цели"
+// @Param goal body models.GoalUpdateRequest true "Данные цели"
 // @Router /goal [patch]
-func (gc GoalController) Patch(c *gin.Context) {
-	var goal models.GoalPatchRequest
+func (gc GoalController) Update(c *gin.Context) {
+	var goal models.GoalUpdateRequest
 
 	if err := c.ShouldBindJSON(&goal); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -157,7 +157,7 @@ func (gc GoalController) Patch(c *gin.Context) {
 		return
 	}
 
-	if err := gc.service.Patch(goal, userID.(uint)); err != nil {
+	if err := gc.service.Update(goal, userID.(uint)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("failed to update goal: %s", err.Error()),
 		})

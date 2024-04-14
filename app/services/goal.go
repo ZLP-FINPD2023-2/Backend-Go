@@ -39,7 +39,7 @@ func (s GoalService) List(userID uint) ([]models.GoalCalc, error) {
 	return goals, err
 }
 
-func (s GoalService) Create(request *models.GoalCreateRequest, userID uint) error {
+func (s GoalService) Store(request *models.GoalStoreRequest, userID uint) error {
 	targetAmount, err := decimal.NewFromString(request.TargetAmount)
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (s GoalService) Create(request *models.GoalCreateRequest, userID uint) erro
 	return s.repository.Create(goal)
 }
 
-func (s GoalService) Patch(req models.GoalPatchRequest, userID uint) error {
+func (s GoalService) Update(req models.GoalUpdateRequest, userID uint) error {
 	targetAmount, err := decimal.NewFromString(req.TargetAmount)
 	if err != nil {
 		return err
