@@ -1,44 +1,44 @@
 #!/usr/bin/env bash
 
-API_URL="http://localhost:8080/api/v1"
-REGISTER_URL="auth/register"
-LOGIN_URL="auth/login"
-
-# Генерация данных пользователя
-PASSWORD="password${RANDOM}"
-EMAIL="user${RANDOM}@example.com"
+# Base
+if ! source "${BASH_SOURCE%/*}/../base"; then
+  exit 1
+fi
 
 # Отправляем POST-запрос для регистрации пользователя
-RESPONSE=$(curl -s -X POST $API_URL/$REGISTER_URL \
-        -H "Content-Type: application/json" \
-        -d '{
-        "email": "'$EMAIL'",
-        "password": "'$PASSWORD'",
-        "firstname": "Oleg",
-        "lastname": "Safronov",
-        "birthday": "18-10-2004",
-        "gender": "Male"
-}')
+req=$(curl -s -X POST "$api_url/$register_url" \
+  -H "Content-Type: application/json" \
+  -d \
+  '{
+    "email": "'"$user_email"'",
+    "password": "'"$user_password"'",
+    "firstname": "Oleg",
+    "lastname": "Safronov",
+    "birthday": "18-10-2004",
+    "gender": "Male"
+  }'
+)
 
 # Проверяем, успешна ли регистрация
-if [[ $(echo $RESPONSE | jq -r '.message') != "User registered successfully" ]]; then
-    echo $RESPONSE | jq
+if ! echo "$req" | jq -r '.token' 1>/dev/null 2>&1; then
+    echo "$req" | jq
     exit 1
 fi
 
 # Отправляем POST-запрос для авторизации пользователя
-RESPONSE=$(curl -s -X POST $API_URL/$LOGIN_URL \
-        -H "Content-Type: application/json" \
-        -d '{
-        "email": "'$EMAIL'",
-        "password": "'$PASSWORD'"
-}')
+req=$(curl -s -X POST "$api_url/$login_url" \
+  -H "Content-Type: application/json" \
+  -d \
+  '{
+    "email": "'"$user_email"'",
+    "password": "'"$user_password"'"
+  }'
+)
 
 # Проверяем, успешна ли авторизация
-if [[ $(echo $RESPONSE | jq -r '.token') == "null" ]]; then
-    echo "Failed to login user"
-    echo $RESPONSE | jq
+if ! echo "$req" | jq -r '.token' 1>/dev/null 2>&1; then
+    echo "$req" | jq
     exit 1
 fi
 
-echo $RESPONSE | jq
+echo "$req" | jq
