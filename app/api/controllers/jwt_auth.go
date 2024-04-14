@@ -85,10 +85,13 @@ func (jwt JWTAuthController) Login(c *gin.Context) {
 		return
 	}
 
+	// Создание ответа
+	response := models.LoginResponce{
+		Token: token,
+	}
+
 	// Отправка токена
-	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-	})
+	c.JSON(http.StatusOK, response)
 }
 
 // Регистрация
