@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -8,13 +9,11 @@ import (
 )
 
 type TrxRequest struct {
-	Title string `json:"title"`
-	// Из-за datetime все может пойти по одному месту
-	Date string `json:"date" validate:"required,datetime,isNotFutureDate"`
-	// Из-за numeric все может пойти по одному месту
+	Title      string `json:"title"`
+	Date       string `json:"date" validate:"required,isNotFutureDate"`
 	Amount     string `json:"amount" validate:"required,numeric"`
-	BudgetFrom uint   `json:"from" validate:"required"`
-	BudgetTo   uint   `json:"to" validate:"required"`
+	BudgetFrom *uint  `json:"from"`
+	BudgetTo   *uint  `json:"to"`
 }
 
 type TrxResponse struct {
@@ -22,17 +21,13 @@ type TrxResponse struct {
 	Title      string          `json:"title"`
 	Date       time.Time       `json:"date"`
 	Amount     decimal.Decimal `json:"amount"`
-	BudgetFrom uint            `json:"from"`
-	BudgetTo   uint            `json:"to"`
+	BudgetFrom *uint           `json:"from"`
+	BudgetTo   *uint           `json:"to"`
 }
 
 type TrxPatchRequest struct {
-	ID         uint   `json:"id" validate:"required"`
-	Title      string `json:"title"`
-	Date       string `json:"date" validate:"datetime"`
-	Amount     string `json:"amount" validate:"numeric"`
-	BudgetFrom uint   `json:"from"`
-	BudgetTo   uint   `json:"to"`
+	Title  string `json:"title"`
+	Amount string `json:"amount" validate:"numeric"`
 }
 
 type Trx struct {
@@ -41,8 +36,8 @@ type Trx struct {
 	Title      string
 	Date       time.Time
 	Amount     decimal.Decimal `sql:"type:decimal(20,2);"`
-	BudgetFrom uint
-	BudgetTo   uint
+	BudgetFrom *sql.NullInt64
+	BudgetTo   *sql.NullInt64
 }
 
 func (t Trx) TableName() string {

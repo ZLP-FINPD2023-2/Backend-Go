@@ -30,7 +30,6 @@ func NewTrxController(
 
 // Получение
 
-// @Deprecated
 // @Security ApiKeyAuth
 // @summary List trx
 // @tags trx
@@ -38,6 +37,8 @@ func NewTrxController(
 // @ID get_trx
 // @Accept json
 // @Produce json
+// @Param amount_min query number false "Минимальная сумма"
+// @Param amount_max query number false "Максимальная сумма"
 // @Param date_from query string false "Дата начала периода в формате 18-10-2004"
 // @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
 // @Success 200 {array} models.TrxResponse
@@ -71,21 +72,20 @@ func (tc TrxController) List(c *gin.Context) {
 			BudgetTo:   trx.BudgetTo,
 		})
 	}
-
 	c.JSON(http.StatusOK, trxResponses)
 }
 
 // Создание
 
-// @Deprecated
 // @Security ApiKeyAuth
 // @summary Create trx
 // @tags trx
 // @Description Создание транзакции
-// @ID post
+// @ID post_trx
 // @Accept json
 // @Produce json
 // @Param transaction body models.TrxRequest true "Данные пользователя"
+// @Success 200 {object} models.TrxResponse
 // @Router /trx [post]
 func (tc TrxController) Post(c *gin.Context) {
 	var transaction models.TrxRequest
@@ -112,30 +112,29 @@ func (tc TrxController) Post(c *gin.Context) {
 		return
 	}
 
-	err := tc.service.Create(&transaction, userID.(uint))
+	trx, err := tc.service.Create(&transaction, userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"error": fmt.Sprintf("failed to create trx: %s", err.Error()),
 		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Transaction added successfully",
-	})
+	c.JSON(http.StatusOK, trx)
 }
 
 // Обновление
 
-// @Deprecated
 // @Security ApiKeyAuth
 // @summary Patch trx
 // @tags trx
 // @Description Изменение транзакции
-// @ID post
+// @ID patch_trx
 // @Accept json
 // @Produce json
+// @Param        id   path      int  true  "ID транзакции"
 // @Param transaction body models.TrxPatchRequest true "Данные транзакций"
-// @Router /trx [patch]
+// @Success 200 {object} models.TrxResponse
+// @Router /trx/{id} [patch]
 func (tc TrxController) Patch(c *gin.Context) {
 	var transaction models.TrxPatchRequest
 	if err := c.ShouldBindJSON(&transaction); err != nil {
@@ -160,30 +159,28 @@ func (tc TrxController) Patch(c *gin.Context) {
 		return
 	}
 
-	if err := tc.service.Patch(transaction, userID.(uint)); err != nil {
+	trxResponse, err := tc.service.Patch(c, transaction, userID.(uint))
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("failed to update trx: %s", err.Error()),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "transaction was updated",
-	})
+	c.JSON(http.StatusOK, trxResponse)
 }
 
 // Удаление
 
-// @Deprecated
 // @Security ApiKeyAuth
 // @summary Delete trx
 // @tags trx
 // @Description Удаление транзакции
-// @ID post
+// @ID delete_trx
 // @Accept json
 // @Produce json
-// @Param id query integer false "id транзакции"
-// @Router /trx [delete]
+// @Param        id   path      int  true  "ID транзакции"
+// @Router /trx/{id} [delete]
 func (tc TrxController) Delete(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
@@ -200,7 +197,7 @@ func (tc TrxController) Delete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusNoContent, gin.H{
 		"message": "transaction was deleted",
 	})
 }

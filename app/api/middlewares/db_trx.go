@@ -49,6 +49,7 @@ func (m DatabaseTrx) Setup() {
 
 		defer func() {
 			if r := recover(); r != nil {
+				m.logger.Info("panic: ", r)
 				txHandle.Rollback()
 			}
 		}()

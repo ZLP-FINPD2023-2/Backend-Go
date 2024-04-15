@@ -96,7 +96,7 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 	currAmount := startAmount
 	budgetCalc.Amounts[dateFrom] = currAmount
 	for _, v := range trxs {
-		if v.BudgetFrom == uint(id) {
+		if v.BudgetFrom.Int64 == int64(id) {
 			currAmount = currAmount.Sub(v.Amount)
 		} else {
 			currAmount = currAmount.Add(v.Amount)
@@ -157,7 +157,7 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 		}
 
 		for _, trx := range trxs {
-			if trx.BudgetFrom == v.ID {
+			if trx.BudgetFrom.Int64 == int64(v.ID) {
 				currAmount = currAmount.Sub(trx.Amount)
 			} else {
 				currAmount = currAmount.Add(trx.Amount)

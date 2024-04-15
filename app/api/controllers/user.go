@@ -34,7 +34,7 @@ func NewUserController(
 // @summary Delete user
 // @tags user
 // @Description Удаление пользователя
-// @ID delete
+// @ID delete_user
 // @Accept json
 // @Produce json
 // @Router /user [delete]
@@ -69,7 +69,7 @@ func (uc UserController) Delete(c *gin.Context) {
 // @summary Get user
 // @tags user
 // @Description Получение пользователя
-// @ID get
+// @ID get_user
 // @Accept json
 // @Produce json
 // @Router /user [get]
@@ -109,7 +109,7 @@ func (uc UserController) Get(c *gin.Context) {
 // @summary Update user
 // @tags user
 // @Description Обновление пользователя
-// @ID update
+// @ID update_user
 // @Accept json
 // @Produce json
 // @Router /user [patch]

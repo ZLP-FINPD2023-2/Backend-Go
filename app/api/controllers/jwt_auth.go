@@ -86,7 +86,7 @@ func (jwt JWTAuthController) Login(c *gin.Context) {
 	}
 
 	// Создание ответа
-	response := models.LoginResponce{
+	response := models.LoginResponse{
 		Token: token,
 	}
 
