@@ -4,5 +4,6 @@ docs
 vendor
 migrations/sqlite
 
+test.db
 .task
 .idea
