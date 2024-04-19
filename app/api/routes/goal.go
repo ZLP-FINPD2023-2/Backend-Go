@@ -16,10 +16,11 @@ type GoalRoutes struct {
 func (s GoalRoutes) Setup() {
 	root := s.handler.Gin.Group("/api/v1").Use(s.authMiddleware.Handler())
 	{
+		root.GET("/goal/:id", s.controller.Get)
 		root.GET("/goal", s.controller.List)
 		root.POST("/goal", s.controller.Store)
-		root.PATCH("/goal", s.controller.Update)
-		root.DELETE("/goal", s.controller.Delete)
+		root.PATCH("/goal/:id", s.controller.Update)
+		root.DELETE("/goal/:id", s.controller.Delete)
 	}
 }
 

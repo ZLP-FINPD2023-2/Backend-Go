@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/shopspring/decimal"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -35,17 +36,22 @@ type GoalStoreRequest struct {
 	TargetAmount string `json:"target_amount" validate:"required,numeric"`
 }
 
+type GoalCalcResponse struct {
+	ID           uint                          `json:"id"`
+	Title        string                        `json:"title"`
+	Amount       map[time.Time]decimal.Decimal `json:"amount"`
+	TargetAmount decimal.Decimal               `json:"target_amount"`
+}
+
 // / Get
-type GoalListResponse struct {
+type GoalResponse struct {
 	ID           uint            `json:"id"`
 	Title        string          `json:"title"`
-	Amount       decimal.Decimal `json:"amount"`
 	TargetAmount decimal.Decimal `json:"target_amount"`
 }
 
 // Update
 type GoalUpdateRequest struct {
-	ID           uint   `json:"id" validate:"required"`
 	Title        string `json:"title"`
 	TargetAmount string `json:"target_amount"`
 }

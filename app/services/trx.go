@@ -174,9 +174,13 @@ func (s TrxService) Patch(c *gin.Context, transaction models.TrxPatchRequest, us
 		return models.TrxResponse{}, err
 	}
 
-	amount, err := decimal.NewFromString(transaction.Amount)
-	if err != nil {
-		return models.TrxResponse{}, err
+	var amount decimal.Decimal
+	if transaction.Amount != "" {
+		currAmount, err := decimal.NewFromString(transaction.Amount)
+		if err != nil {
+			return models.TrxResponse{}, err
+		}
+		amount = currAmount
 	}
 
 	trx := models.Trx{

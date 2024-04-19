@@ -94,7 +94,7 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 	budgetCalc := models.BudgetGetResponse{
 		ID:      budget.ID,
 		Title:   budget.Title,
-		Goal:    budget.Goal,
+		Goal:    budget.GoalID,
 		Amounts: make(map[time.Time]decimal.Decimal),
 	}
 
@@ -167,7 +167,7 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 		budg := models.BudgetGetResponse{
 			ID:      v.ID,
 			Title:   v.Title,
-			Goal:    v.Goal,
+			Goal:    v.GoalID,
 			Amounts: make(map[time.Time]decimal.Decimal),
 		}
 
@@ -209,7 +209,7 @@ func (s BudgetService) Create(request *models.BudgetCreateRequest, userID uint) 
 	budget := models.Budget{
 		UserID: userID,
 		Title:  request.Title,
-		Goal:   request.Goal,
+		GoalID: request.Goal,
 	}
 
 	if err := s.repository.Create(&budget); err != nil {
@@ -219,7 +219,7 @@ func (s BudgetService) Create(request *models.BudgetCreateRequest, userID uint) 
 	newBudget := models.BudgetCreateResponse{
 		ID:     budget.ID,
 		Title:  budget.Title,
-		GoadID: budget.Goal,
+		GoadID: budget.GoalID,
 	}
 
 	return newBudget, nil
@@ -236,8 +236,8 @@ func (s BudgetService) Patch(c *gin.Context, budget models.BudgetPatchRequest, u
 	}
 
 	updateBudget := models.Budget{
-		Title: budget.Title,
-		Goal:  budget.Goal,
+		Title:  budget.Title,
+		GoalID: budget.Goal,
 	}
 
 	budgetDB, err := s.repository.Patch(&updateBudget, uint(id), userID)
@@ -248,7 +248,7 @@ func (s BudgetService) Patch(c *gin.Context, budget models.BudgetPatchRequest, u
 	resp := models.BudgetPatchResponse{
 		ID:    budgetDB.ID,
 		Title: budgetDB.Title,
-		Goal:  budgetDB.Goal,
+		Goal:  budgetDB.GoalID,
 	}
 
 	return resp, nil

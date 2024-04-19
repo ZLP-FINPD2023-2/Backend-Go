@@ -3,7 +3,6 @@ package repository
 import (
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
-	"log"
 	"time"
 
 	"finapp/lib"
@@ -40,13 +39,22 @@ func (r BudgetRepository) List(userID uint) ([]models.Budget, error) {
 	return budgets, err
 }
 
+func (r BudgetRepository) ListOfGoal(userID uint, goalID uint) ([]models.Budget, error) {
+	var budgets []models.Budget
+	err := r.Database.Where("user_id = ? AND goal_id = ?", userID, goalID).Find(&budgets).Error
+	if err != nil {
+		return nil, err
+	}
+	return budgets, err
+}
+
 func (r BudgetRepository) Get(id uint, userID uint) (models.Budget, error) {
 	var budget models.Budget
 	err := r.Database.Where("user_id = ?", userID).Where("id = ?", id).First(&budget).Error
 	return budget, err
 }
 
-// Получает сумму бюджета до определенного промежутка
+// Получает сумму бюджета до определенной даты
 func (r BudgetRepository) GetBudgetAmount(budgetID, userID uint, date time.Time) (decimal.Decimal, error) {
 	var amountStr string
 	err := r.Database.Model(&models.Trx{}).
@@ -56,7 +64,6 @@ func (r BudgetRepository) GetBudgetAmount(budgetID, userID uint, date time.Time)
 		Group("user_id").
 		Row().
 		Scan(&amountStr)
-	log.Println(amountStr)
 	if err != nil {
 		return decimal.Decimal{}, err
 	}

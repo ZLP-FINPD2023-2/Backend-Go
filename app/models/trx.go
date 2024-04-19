@@ -27,7 +27,7 @@ type TrxResponse struct {
 
 type TrxPatchRequest struct {
 	Title  string `json:"title"`
-	Amount string `json:"amount" validate:"numeric"`
+	Amount string `json:"amount"`
 }
 
 type Trx struct {

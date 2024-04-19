@@ -39,7 +39,7 @@ type Budget struct {
 	gorm.Model
 	UserID uint
 	Title  string
-	Goal   uint
+	GoalID uint
 }
 
 func (b Budget) TableName() string {

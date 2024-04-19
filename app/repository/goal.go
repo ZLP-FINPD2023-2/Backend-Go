@@ -83,12 +83,21 @@ func (r GoalRepository) List(userID uint) ([]models.GoalCalc, error) {
 	return goals, err
 }
 
-func (r GoalRepository) Create(goal models.Goal) error {
+func (r GoalRepository) Create(goal *models.Goal) error {
 	return r.Database.Create(&goal).Error
 }
 
-func (r GoalRepository) Patch(goal models.Goal) error {
-	return r.Database.Save(&goal).Error
+func (r GoalRepository) Patch(goal models.Goal, id, userID uint) (models.Goal, error) {
+	var updateGoal models.Goal
+	err := r.Database.Model(&updateGoal).Where("user_id = ? AND id = ?", userID, id).Updates(&goal).Error
+	if err != nil {
+		return models.Goal{}, nil
+	}
+
+	if err := r.Database.Where("id = ? AND user_id = ?", id, userID).First(&updateGoal).Error; err != nil {
+		return models.Goal{}, err
+	}
+	return updateGoal, nil
 }
 
 func (r GoalRepository) Delete(id uint, userID uint) error {
