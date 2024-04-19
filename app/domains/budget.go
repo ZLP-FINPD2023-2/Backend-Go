@@ -12,6 +12,6 @@ type BudgetService interface {
 	List(c *gin.Context, userID uint) ([]models.BudgetGetResponse, error)
 	Get(c *gin.Context, userID uint) (models.BudgetGetResponse, error)
 	Create(request *models.BudgetCreateRequest, userID uint) (models.BudgetCreateResponse, error)
-	Patch(budget models.BudgetPatchRequest, userID uint) (models.BudgetPatchResponse, error)
+	Patch(c *gin.Context, budget models.BudgetPatchRequest, userID uint) (models.BudgetPatchResponse, error)
 	Delete(c *gin.Context, userID uint) error
 }

@@ -43,15 +43,12 @@ func (r TrxRepository) List(userID uint, dateFrom, dateTo time.Time, minAmount, 
 	query := r.Database.Where("user_id = ?", userID)
 	if !dateFrom.Equal(time.Time{}) {
 		query = query.Where("date >= ?", dateFrom)
-		log.Println("Z A H O D 1")
 	}
 	if !dateTo.Equal(time.Time{}) {
 		query = query.Where("date <= ?", dateTo)
-		log.Println("Z A H O D 2")
 	}
 	if !maxAmount.Equal(decimal.Zero) {
 		query = query.Where("amount <= ?", maxAmount)
-		log.Println("Z A H O D 3")
 	}
 	query = query.Where("amount >= ?", minAmount)
 	err := query.Find(&trxs).Error
@@ -60,10 +57,14 @@ func (r TrxRepository) List(userID uint, dateFrom, dateTo time.Time, minAmount, 
 
 func (r TrxRepository) ListFromBudget(budgetID, userID uint, dateFrom time.Time, dateTo time.Time) ([]models.Trx, error) {
 	var trxs []models.Trx
-	query := r.Database.Where("user_id = ?", userID)
-	query = query.Where("date > ? AND date <= ?", dateFrom, dateTo)
-	query = query.Where("budget_from = ?", budgetID).Or("budget_to = ?", budgetID)
+	query := r.Database.Where("user_id = ?", userID).
+		Where("budget_from = ? OR budget_to = ?", budgetID, budgetID).
+		Where("date > ?", dateFrom)
+	if !dateTo.Equal(time.Time{}) {
+		query = query.Where("date <= ?", dateTo)
+	}
 	err := query.Find(&trxs).Error
+	log.Println("PZD")
 	return trxs, err
 }
 

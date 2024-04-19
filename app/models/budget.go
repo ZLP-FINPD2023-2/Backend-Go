@@ -18,7 +18,6 @@ type BudgetCreateResponse struct {
 }
 
 type BudgetPatchRequest struct {
-	ID    uint   `json:"id" validate:"required"`
 	Title string `json:"title"`
 	Goal  uint   `json:"goal_id"`
 }

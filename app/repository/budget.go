@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
+	"log"
 	"time"
 
 	"finapp/lib"
@@ -48,13 +49,14 @@ func (r BudgetRepository) Get(id uint, userID uint) (models.Budget, error) {
 // Получает сумму бюджета до определенного промежутка
 func (r BudgetRepository) GetBudgetAmount(budgetID, userID uint, date time.Time) (decimal.Decimal, error) {
 	var amountStr string
-	err := r.Database.Select("to_amount - from_amount").Model(&models.Trx{}).
-		Select("SUM(CASE WHEN budget_from = ? THEN amount ELSE 0 END) AS from_amount, "+
-			"SUM(CASE WHEN budget_to = ? THEN amount ELSE 0 END) AS to_amount", budgetID, budgetID).
+	err := r.Database.Model(&models.Trx{}).
+		Select("SUM(CASE WHEN budget_to = ? THEN amount ELSE 0 END) - "+
+			"SUM(CASE WHEN budget_from = ? THEN amount ELSE 0 END)", budgetID, budgetID).
 		Where("user_id = ? AND date <= ?", userID, date).
 		Group("user_id").
 		Row().
 		Scan(&amountStr)
+	log.Println(amountStr)
 	if err != nil {
 		return decimal.Decimal{}, err
 	}
@@ -70,8 +72,17 @@ func (r BudgetRepository) Create(budget *models.Budget) error {
 	return r.Database.Create(&budget).Error
 }
 
-func (r BudgetRepository) Patch(budget *models.Budget) error {
-	return r.Database.Save(budget).Error
+func (r BudgetRepository) Patch(budget *models.Budget, id, userID uint) (models.Budget, error) {
+	var budgetResponse models.Budget
+	err := r.Database.Model(&budgetResponse).Where("user_id = ? AND id = ?", userID, id).Updates(&budget).Error
+	if err != nil {
+		return models.Budget{}, nil
+	}
+
+	if err := r.Database.Where("id = ? AND user_id = ?", id, userID).First(&budgetResponse).Error; err != nil {
+		return models.Budget{}, err
+	}
+	return budgetResponse, nil
 }
 
 func (r BudgetRepository) Delete(id uint, userID uint) error {

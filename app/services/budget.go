@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"errors"
 	"finapp/constants"
 	"github.com/gin-gonic/gin"
@@ -79,7 +80,10 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 
 	startAmount, err := s.repository.GetBudgetAmount(uint(id), userID, dateFrom)
 	if err != nil {
-		return models.BudgetGetResponse{}, err
+		if !errors.Is(err, sql.ErrNoRows) {
+			return models.BudgetGetResponse{}, err
+		}
+		startAmount = decimal.New(0, 0)
 	}
 
 	trxs, err := s.trxRepository.ListFromBudget(uint(id), userID, dateFrom, dateTo)
@@ -93,9 +97,20 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 		Goal:    budget.Goal,
 		Amounts: make(map[time.Time]decimal.Decimal),
 	}
-	currAmount := startAmount
-	budgetCalc.Amounts[dateFrom] = currAmount
+
+	var currAmount decimal.Decimal
+	if !dateFrom.Equal(time.Time{}) && !startAmount.Equals(decimal.Zero) {
+		currAmount = startAmount
+		budgetCalc.Amounts[dateFrom] = startAmount
+	}
+
 	for _, v := range trxs {
+		if v.BudgetFrom == nil {
+			currAmount = currAmount.Add(v.Amount)
+			budgetCalc.Amounts[v.Date] = currAmount
+			continue
+		}
+
 		if v.BudgetFrom.Int64 == int64(id) {
 			currAmount = currAmount.Sub(v.Amount)
 		} else {
@@ -136,6 +151,19 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 
 	var budgetsAmounts []models.BudgetGetResponse
 	for _, v := range budgets {
+		startAmount, err := s.repository.GetBudgetAmount(v.ID, userID, dateFrom)
+		if err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return nil, err
+			}
+			startAmount = decimal.New(0, 0)
+		}
+
+		trxs, err := s.trxRepository.ListFromBudget(v.ID, userID, dateFrom, dateTo)
+		if err != nil {
+			return nil, err
+		}
+
 		budg := models.BudgetGetResponse{
 			ID:      v.ID,
 			Title:   v.Title,
@@ -143,20 +171,19 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 			Amounts: make(map[time.Time]decimal.Decimal),
 		}
 
-		startAmount, err := s.repository.GetBudgetAmount(v.ID, userID, dateFrom)
-		if err != nil {
-			return nil, err
-		}
-
-		currAmount := startAmount
-		budg.Amounts[dateFrom] = startAmount
-
-		trxs, err := s.trxRepository.ListFromBudget(v.ID, userID, dateFrom, dateTo)
-		if err != nil {
-			return nil, err
+		var currAmount decimal.Decimal
+		if !dateFrom.Equal(time.Time{}) && !startAmount.Equals(decimal.Zero) {
+			currAmount = startAmount
+			budg.Amounts[dateFrom] = startAmount
 		}
 
 		for _, trx := range trxs {
+			if trx.BudgetFrom == nil {
+				currAmount = currAmount.Add(trx.Amount)
+				budg.Amounts[trx.Date] = currAmount
+				continue
+			}
+
 			if trx.BudgetFrom.Int64 == int64(v.ID) {
 				currAmount = currAmount.Sub(trx.Amount)
 			} else {
@@ -167,6 +194,7 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 
 		budgetsAmounts = append(budgetsAmounts, budg)
 	}
+
 	return budgetsAmounts, err
 }
 
@@ -197,30 +225,37 @@ func (s BudgetService) Create(request *models.BudgetCreateRequest, userID uint) 
 	return newBudget, nil
 }
 
-func (s BudgetService) Patch(budget models.BudgetPatchRequest, userID uint) (models.BudgetPatchResponse, error) {
-	updateBudget := models.Budget{
-		UserID: userID,
-		Title:  budget.Title,
-		Goal:   budget.Goal,
+func (s BudgetService) Patch(c *gin.Context, budget models.BudgetPatchRequest, userID uint) (models.BudgetPatchResponse, error) {
+	idStr := c.Param("id")
+	if idStr == "" {
+		return models.BudgetPatchResponse{}, errors.New("id does not exists")
 	}
-	updateBudget.ID = budget.ID
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return models.BudgetPatchResponse{}, err
+	}
 
-	err := s.repository.Patch(&updateBudget)
+	updateBudget := models.Budget{
+		Title: budget.Title,
+		Goal:  budget.Goal,
+	}
+
+	budgetDB, err := s.repository.Patch(&updateBudget, uint(id), userID)
 	if err != nil {
 		return models.BudgetPatchResponse{}, err
 	}
 
 	resp := models.BudgetPatchResponse{
-		ID:    updateBudget.ID,
-		Title: updateBudget.Title,
-		Goal:  updateBudget.Goal,
+		ID:    budgetDB.ID,
+		Title: budgetDB.Title,
+		Goal:  budgetDB.Goal,
 	}
 
 	return resp, nil
 }
 
 func (s BudgetService) Delete(c *gin.Context, userID uint) error {
-	paramID := c.Params.ByName("id")
+	paramID := c.Param("id")
 	if paramID == "" {
 		return errors.New("budget id does not exists")
 	}

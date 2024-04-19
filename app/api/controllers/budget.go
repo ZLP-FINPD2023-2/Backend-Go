@@ -30,7 +30,6 @@ func NewBudgetController(
 
 // Получение
 
-// @Deprecated
 // @Security ApiKeyAuth
 // @summary Get budget
 // @tags budget
@@ -38,10 +37,11 @@ func NewBudgetController(
 // @ID budget-get
 // @Accept json
 // @Produce json
+// @Param        id   path      int  true  "ID бюджета"
 // @Param date_from query string false "Дата начала периода в формате 18-10-2004"
 // @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
 // @Success 200 {object} models.BudgetGetResponse
-// @Router /budget/:id [get]
+// @Router /budget/{id} [get]
 func (bc BudgetController) Get(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
@@ -101,7 +101,6 @@ func (bc BudgetController) List(c *gin.Context) {
 
 // Создание
 
-// @Deprecated
 // @Security ApiKeyAuth
 // @summary Create budget
 // @tags budget
@@ -149,7 +148,6 @@ func (bc BudgetController) Post(c *gin.Context) {
 
 // Обновление
 
-// @Deprecated
 // @Security ApiKeyAuth
 // @summary Patch budget
 // @tags budget
@@ -157,9 +155,10 @@ func (bc BudgetController) Post(c *gin.Context) {
 // @ID budget-patch
 // @Accept json
 // @Produce json
+// @Param        id   path      int  true  "ID транзакции"
 // @Param budget body models.BudgetPatchRequest true "Данные бюждета"
 // @Success 200 {object} models.BudgetPatchResponse
-// @Router /budget [patch]
+// @Router /budget/{id} [patch]
 func (bc BudgetController) Patch(c *gin.Context) {
 	var budget models.BudgetPatchRequest
 
@@ -185,7 +184,7 @@ func (bc BudgetController) Patch(c *gin.Context) {
 		return
 	}
 
-	newBudget, err := bc.service.Patch(budget, userID.(uint))
+	newBudget, err := bc.service.Patch(c, budget, userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("failed to update budget: %s", err.Error()),
@@ -198,7 +197,6 @@ func (bc BudgetController) Patch(c *gin.Context) {
 
 // Удаление
 
-// @Deprecated
 // @Security ApiKeyAuth
 // @summary Delete budget
 // @tags budget
@@ -206,7 +204,8 @@ func (bc BudgetController) Patch(c *gin.Context) {
 // @ID budget-delete
 // @Accept json
 // @Produce json
-// @Router /budget/:id [delete]
+// @Param        id   path      int  true  "ID транзакции"
+// @Router /budget/{id} [delete]
 func (bc BudgetController) Delete(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {

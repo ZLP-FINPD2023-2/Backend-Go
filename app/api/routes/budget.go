@@ -20,7 +20,7 @@ func (s BudgetRoutes) Setup() {
 		root.GET("/budget", s.controller.List)
 		root.POST("/budget", s.controller.Post)
 		root.DELETE("/budget/:id", s.controller.Delete)
-		root.PATCH("/budget", s.controller.Patch)
+		root.PATCH("/budget/:id", s.controller.Patch)
 	}
 }
 
