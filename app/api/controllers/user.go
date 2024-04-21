@@ -30,14 +30,14 @@ func NewUserController(
 
 // Удаление
 
-// @Security		ApiKeyAuth
-// @summary		Delete user
-// @tags			user
-// @Description	Удаление пользователя
-// @ID				delete
-// @Accept			json
-// @Produce		json
-// @Router			/user [delete]
+// @Security ApiKeyAuth
+// @summary Delete user
+// @tags user
+// @Description Удаление пользователя
+// @ID delete_user
+// @Accept json
+// @Produce json
+// @Router /user [delete]
 func (uc UserController) Delete(c *gin.Context) {
 	// Парсинг запроса
 	userId, ok := c.Get(constants.UserID)
@@ -65,14 +65,14 @@ func (uc UserController) Delete(c *gin.Context) {
 
 // Получение
 
-// @Security		ApiKeyAuth
-// @summary		Get user
-// @tags			user
-// @Description	Получение пользователя
-// @ID				get
-// @Accept			json
-// @Produce		json
-// @Router			/user [get]
+// @Security ApiKeyAuth
+// @summary Get user
+// @tags user
+// @Description Получение пользователя
+// @ID get_user
+// @Accept json
+// @Produce json
+// @Router /user [get]
 func (uc UserController) Get(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
@@ -90,10 +90,10 @@ func (uc UserController) Get(c *gin.Context) {
 		return
 	}
 
-	response := models.GetResponse{
+	response := models.UserGetResponse{
 		Email:      user.Email,
-		First_name: user.FirstName,
-		Last_name:  user.LastName,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
 		Patronymic: user.Patronymic,
 		Gender:     user.Gender,
 		Birthday:   user.Birthday.Format(constants.DateFormat),
@@ -105,14 +105,14 @@ func (uc UserController) Get(c *gin.Context) {
 // Обновление
 
 // @Deprecated
-// @Security		ApiKeyAuth
-// @summary		Update user
-// @tags			user
-// @Description	Обновление пользователя
-// @ID				update
-// @Accept			json
-// @Produce		json
-// @Router			/user [patch]
+// @Security ApiKeyAuth
+// @summary Update user
+// @tags user
+// @Description Обновление пользователя
+// @ID update_user
+// @Accept json
+// @Produce json
+// @Router /user [patch]
 func (uc UserController) Update(c *gin.Context) {
 	c.Status(http.StatusNotImplemented)
 }

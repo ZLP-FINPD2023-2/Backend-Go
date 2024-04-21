@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# Base
+if ! source "${BASH_SOURCE%/*}/../base"; then
+  exit 1
+fi
+
+# Отправляем POST-запрос для авторизации пользователя
+res=$(curl -s -X POST "$api_url/$login_url" \
+  -H "Content-Type: application/json" \
+  -d \
+  '{
+    "email": "'"$user_email"'",
+    "password": "'"$user_password"'"
+  }'
+)
+
+# Проверяем, успешна ли авторизация
+if ! echo "$res" | jq -re '.token' 1>/dev/null 2>&1; then
+    echo "$res" | jq
+    exit 1
+fi
+
+echo "$res" | jq

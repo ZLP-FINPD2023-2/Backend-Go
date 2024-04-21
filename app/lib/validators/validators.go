@@ -1,6 +1,8 @@
 package validators
 
 import (
+	"finapp/constants"
+	"log"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -13,13 +15,13 @@ func customValidator() *validator.Validate {
 }
 
 func isNotFutureDate(fldLvl validator.FieldLevel) bool {
-	dateToValidate, ok := fldLvl.Field().Interface().(time.Time)
-	if !ok {
+	dateToValidateStr := fldLvl.Field().String()
+	dateToValidate, err := time.Parse(constants.DateFormat, dateToValidateStr)
+	if err != nil {
+		log.Println(err)
 		return false
 	}
-
 	dateToValidate = dateToValidate.UTC()
 	currentDate := time.Now().UTC()
-
 	return dateToValidate.Before(currentDate) || dateToValidate.Equal(currentDate)
 }

@@ -1,11 +1,15 @@
 package services
 
 import (
+	"database/sql"
 	"errors"
+	"finapp/constants"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
+	"sort"
 	"strconv"
+	"time"
 
 	"finapp/domains"
 	"finapp/lib"
@@ -14,17 +18,23 @@ import (
 )
 
 type GoalService struct {
-	logger     lib.Logger
-	repository repository.GoalRepository
+	logger           lib.Logger
+	repository       repository.GoalRepository
+	budgetRepository repository.BudgetRepository
+	trxRepository    repository.TrxRepository
 }
 
 func NewGoalService(
 	logger lib.Logger,
 	repository repository.GoalRepository,
+	budgetRepository repository.BudgetRepository,
+	trxRepository repository.TrxRepository,
 ) domains.GoalService {
 	return GoalService{
-		logger:     logger,
-		repository: repository,
+		logger:           logger,
+		repository:       repository,
+		budgetRepository: budgetRepository,
+		trxRepository:    trxRepository,
 	}
 }
 
@@ -33,43 +43,241 @@ func (s GoalService) WithTrx(trxHandle *gorm.DB) domains.GoalService {
 	return s
 }
 
-func (s GoalService) List(userID uint) ([]models.GoalCalc, error) {
-	goals, err := s.repository.List(userID)
+func (s GoalService) List(c *gin.Context, userID uint) ([]models.GoalCalcResponse, error) {
+	var (
+		dateFrom time.Time
+		dateTo   time.Time
+	)
+	if dateFromStr := c.Query("date_from"); dateFromStr != "" {
+		dateFromTemp, err := time.Parse(constants.DateFormat, dateFromStr)
+		if err != nil {
+			return nil, err
+		}
+		dateFrom = dateFromTemp
+	}
+	if dateToStr := c.Query("date_from"); dateToStr != "" {
+		dateToTemp, err := time.Parse(constants.DateFormat, dateToStr)
+		if err != nil {
+			return nil, err
+		}
+		dateTo = dateToTemp
+	}
 
-	return goals, err
+	if !dateTo.IsZero() && dateTo.Before(dateFrom) {
+		return nil, errors.New("date_from time goes after date_to")
+	}
+
+	goals, err := s.repository.List(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp []models.GoalCalcResponse
+	for _, goal := range goals {
+		budgets, err := s.budgetRepository.ListOfGoal(userID, goal.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		g := models.GoalCalcResponse{
+			ID:           goal.ID,
+			Title:        goal.Title,
+			TargetAmount: goal.TargetAmount,
+			Amounts:      make(map[string]decimal.Decimal),
+		}
+
+		changes := make(map[time.Time]decimal.Decimal)
+		for _, v := range budgets {
+			amount, err := s.budgetRepository.GetBudgetAmount(v.ID, userID, dateFrom)
+			if err != nil {
+				if !errors.Is(err, sql.ErrNoRows) {
+					return nil, err
+				}
+				amount = decimal.Zero
+			}
+			if !dateFrom.IsZero() {
+				g.Amounts[dateFrom.Format(constants.DateFormat)] =
+					g.Amounts[dateFrom.Format(constants.DateFormat)].Add(amount)
+			}
+
+			budgetChanges, err := s.trxRepository.GetBudgetChanges(v.ID, userID, dateFrom, dateTo)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, change := range budgetChanges {
+				changes[change.Date] = changes[change.Date].Add(change.AmountChange)
+			}
+		}
+
+		dates := make([]time.Time, 0, len(changes))
+		for k, _ := range changes {
+			dates = append(dates, k)
+		}
+		sort.Slice(dates, func(i int, j int) bool {
+			return dates[i].Before(dates[j])
+		})
+
+		currAmountState := g.Amounts[dateFrom.Format(constants.DateFormat)]
+		for _, v := range dates {
+			currAmountState = currAmountState.Add(changes[v])
+			g.Amounts[v.Format(constants.DateFormat)] = currAmountState
+		}
+		resp = append(resp, g)
+	}
+
+	return resp, err
 }
 
-func (s GoalService) Create(request *models.GoalCreateRequest, userID uint) error {
-	targetAmount, err := decimal.NewFromString(request.TargetAmount)
-	if err != nil {
-		return err
+func (s GoalService) Get(c *gin.Context, userID uint) (models.GoalCalcResponse, error) {
+	queryID := c.Param("id")
+	if queryID == "" {
+		return models.GoalCalcResponse{}, errors.New("goal id does not exists")
 	}
+	id, err := strconv.Atoi(queryID)
+	if err != nil {
+		return models.GoalCalcResponse{}, err
+	}
+
+	var (
+		dateFrom time.Time
+		dateTo   time.Time
+	)
+	if dateFromStr := c.Query("date_from"); dateFromStr != "" {
+		dateFromTemp, err := time.Parse(constants.DateFormat, dateFromStr)
+		if err != nil {
+			return models.GoalCalcResponse{}, err
+		}
+		dateFrom = dateFromTemp
+	}
+	if dateToStr := c.Query("date_from"); dateToStr != "" {
+		dateToTemp, err := time.Parse(constants.DateFormat, dateToStr)
+		if err != nil {
+			return models.GoalCalcResponse{}, err
+		}
+		dateTo = dateToTemp
+	}
+
+	if !dateTo.IsZero() && dateTo.Before(dateFrom) {
+		return models.GoalCalcResponse{}, errors.New("date_from time goes after date_to")
+	}
+
+	goal, err := s.repository.Get(uint(id), userID)
+	if err != nil {
+		return models.GoalCalcResponse{}, err
+	}
+
+	budgets, err := s.budgetRepository.ListOfGoal(userID, goal.ID)
+	if err != nil {
+		return models.GoalCalcResponse{}, err
+	}
+
+	resp := models.GoalCalcResponse{
+		ID:           goal.ID,
+		Title:        goal.Title,
+		TargetAmount: goal.TargetAmount,
+		Amounts:      make(map[string]decimal.Decimal),
+	}
+
+	changes := make(map[time.Time]decimal.Decimal)
+	for _, v := range budgets {
+		amount, err := s.budgetRepository.GetBudgetAmount(v.ID, userID, dateFrom)
+		if err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return models.GoalCalcResponse{}, err
+			}
+			amount = decimal.Zero
+		}
+		if !dateFrom.IsZero() {
+			resp.Amounts[dateFrom.Format(constants.DateFormat)] =
+				resp.Amounts[dateFrom.Format(constants.DateFormat)].Add(amount)
+		}
+
+		budgetChanges, err := s.trxRepository.GetBudgetChanges(v.ID, userID, dateFrom, dateTo)
+		if err != nil {
+			return models.GoalCalcResponse{}, err
+		}
+
+		for _, change := range budgetChanges {
+			changes[change.Date] = changes[change.Date].Add(change.AmountChange)
+		}
+	}
+
+	dates := make([]time.Time, 0, len(changes))
+	for k, _ := range changes {
+		dates = append(dates, k)
+	}
+	sort.Slice(dates, func(i int, j int) bool {
+		return dates[i].Before(dates[j])
+	})
+
+	currAmountState := resp.Amounts[dateFrom.Format(constants.DateFormat)]
+	for _, v := range dates {
+		currAmountState = currAmountState.Add(changes[v])
+		resp.Amounts[v.Format(constants.DateFormat)] = currAmountState
+	}
+
+	return resp, nil
+}
+
+func (s GoalService) Store(request *models.GoalStoreRequest, userID uint) (models.GoalResponse, error) {
+	targetAmount := decimal.NewFromFloat(request.TargetAmount)
 	goal := models.Goal{
 		UserID:       userID,
 		TargetAmount: targetAmount,
 		Title:        request.Title,
 	}
 
-	return s.repository.Create(goal)
+	err := s.repository.Create(&goal)
+	if err != nil {
+		return models.GoalResponse{}, err
+	}
+
+	resp := models.GoalResponse{
+		ID:           goal.ID,
+		Title:        goal.Title,
+		TargetAmount: goal.TargetAmount,
+	}
+
+	return resp, nil
 }
 
-func (s GoalService) Patch(req models.GoalPatchRequest, userID uint) error {
-	targetAmount, err := decimal.NewFromString(req.TargetAmount)
-	if err != nil {
-		return err
+func (s GoalService) Update(c *gin.Context, req models.GoalUpdateRequest, userID uint) (models.GoalResponse, error) {
+	queryID := c.Param("id")
+	if queryID == "" {
+		return models.GoalResponse{}, errors.New("goal id does not exists")
 	}
+	id, err := strconv.Atoi(queryID)
+	if err != nil {
+		return models.GoalResponse{}, err
+	}
+
+	var targetAmount decimal.Decimal
+	if req.TargetAmount != 0 {
+		amount := decimal.NewFromFloat(req.TargetAmount)
+		targetAmount = amount
+	}
+
 	goal := models.Goal{
-		UserID:       userID,
 		Title:        req.Title,
 		TargetAmount: targetAmount,
 	}
-	goal.ID = req.ID
 
-	return s.repository.Patch(goal)
+	updateGoal, err := s.repository.Patch(goal, uint(id), userID)
+	if err != nil {
+		return models.GoalResponse{}, nil
+	}
+
+	resp := models.GoalResponse{
+		ID:           updateGoal.ID,
+		Title:        updateGoal.Title,
+		TargetAmount: updateGoal.TargetAmount,
+	}
+	return resp, nil
 }
 
 func (s GoalService) Delete(c *gin.Context, UserID uint) error {
-	queryID := c.Query("id")
+	queryID := c.Param("id")
 	if queryID == "" {
 		return errors.New("goal id does not exists")
 	}
@@ -77,5 +285,6 @@ func (s GoalService) Delete(c *gin.Context, UserID uint) error {
 	if err != nil {
 		return err
 	}
+
 	return s.repository.Delete(uint(id), UserID)
 }

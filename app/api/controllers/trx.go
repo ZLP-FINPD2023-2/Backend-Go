@@ -30,18 +30,19 @@ func NewTrxController(
 
 // Получение
 
-// @Deprecated
-// @Security		ApiKeyAuth
-// @summary		List trx
-// @tags			trx
-// @Description	Получение транзакции
-// @ID				get_trx
-// @Accept			json
-// @Produce		json
-// @Param			date_from	query	string	false	"Дата начала периода в формате 18-10-2004"
-// @Param			date_to		query	string	false	"Дата окончания периода в формате 18-10-2004"
-// @Success		200			{array}	models.TrxResponse
-// @Router			/trx [get]
+// @Security ApiKeyAuth
+// @summary List trx
+// @tags trx
+// @Description Получение транзакции
+// @ID list_trx
+// @Accept json
+// @Produce json
+// @Param amount_min query number false "Минимальная сумма"
+// @Param amount_max query number false "Максимальная сумма"
+// @Param date_from query string false "Дата начала периода в формате 18-10-2004"
+// @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
+// @Success 200 {array} models.TrxResponse
+// @Router /trx [get]
 func (tc TrxController) List(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
@@ -71,22 +72,51 @@ func (tc TrxController) List(c *gin.Context) {
 			BudgetTo:   trx.BudgetTo,
 		})
 	}
-
 	c.JSON(http.StatusOK, trxResponses)
+}
+
+// @Security ApiKeyAuth
+// @summary Get trx
+// @tags trx
+// @Description Получение транзакции
+// @ID get_trx
+// @Accept json
+// @Produce json
+// @Param id  path  int  true  "ID транзакции"
+// @Success 200 {object} models.TrxResponse
+// @Router /trx/{id} [get]
+func (tc TrxController) Get(c *gin.Context) {
+	userID, ok := c.Get(constants.UserID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
+		})
+		return
+	}
+
+	resp, err := tc.service.Get(c, userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("failed to get trx: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }
 
 // Создание
 
-// @Deprecated
-// @Security		ApiKeyAuth
-// @summary		Create trx
-// @tags			trx
-// @Description	Создание транзакции
-// @ID				post
-// @Accept			json
-// @Produce		json
-// @Param			transaction	body	models.TrxRequest	true	"Данные пользователя"
-// @Router			/trx [post]
+// @Security ApiKeyAuth
+// @summary Create trx
+// @tags trx
+// @Description Создание транзакции
+// @ID post_trx
+// @Accept json
+// @Produce json
+// @Param transaction body models.TrxRequest true "Данные пользователя"
+// @Success 200 {object} models.TrxResponse
+// @Router /trx [post]
 func (tc TrxController) Post(c *gin.Context) {
 	var transaction models.TrxRequest
 
@@ -101,6 +131,7 @@ func (tc TrxController) Post(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"error": validators.ParseValidationErrors(err),
 		})
+		return
 	}
 
 	userID, ok := c.Get(constants.UserID)
@@ -111,30 +142,29 @@ func (tc TrxController) Post(c *gin.Context) {
 		return
 	}
 
-	err := tc.service.Create(&transaction, userID.(uint))
+	trx, err := tc.service.Create(&transaction, userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"error": fmt.Sprintf("failed to create trx: %s", err.Error()),
 		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Transaction added successfully",
-	})
+	c.JSON(http.StatusOK, trx)
 }
 
 // Обновление
 
-// @Deprecated
-// @Security		ApiKeyAuth
-// @summary		Patch trx
-// @tags			trx
-// @Description	Изменение транзакции
-// @ID				post
-// @Accept			json
-// @Produce		json
-// @Param			transaction	body	models.TrxPatchRequest	true	"Данные транзакций"
-// @Router			/trx [patch]
+// @Security ApiKeyAuth
+// @summary Patch trx
+// @tags trx
+// @Description Изменение транзакции
+// @ID patch_trx
+// @Accept json
+// @Produce json
+// @Param        id   path      int  true  "ID транзакции"
+// @Param transaction body models.TrxPatchRequest true "Данные транзакций"
+// @Success 200 {object} models.TrxResponse
+// @Router /trx/{id} [patch]
 func (tc TrxController) Patch(c *gin.Context) {
 	var transaction models.TrxPatchRequest
 	if err := c.ShouldBindJSON(&transaction); err != nil {
@@ -148,6 +178,7 @@ func (tc TrxController) Patch(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"error": validators.ParseValidationErrors(err),
 		})
+		return
 	}
 
 	userID, ok := c.Get(constants.UserID)
@@ -158,29 +189,28 @@ func (tc TrxController) Patch(c *gin.Context) {
 		return
 	}
 
-	if err := tc.service.Patch(transaction, userID.(uint)); err != nil {
+	trxResponse, err := tc.service.Patch(c, transaction, userID.(uint))
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("failed to update trx: %s", err.Error()),
 		})
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "transaction was updated",
-	})
+	c.JSON(http.StatusOK, trxResponse)
 }
 
 // Удаление
 
-// @Deprecated
-// @Security		ApiKeyAuth
-// @summary		Delete trx
-// @tags			trx
-// @Description	Удаление транзакции
-// @ID				post
-// @Accept			json
-// @Produce		json
-// @Param			id	query	integer	false	"id транзакции"
-// @Router			/trx [delete]
+// @Security ApiKeyAuth
+// @summary Delete trx
+// @tags trx
+// @Description Удаление транзакции
+// @ID delete_trx
+// @Accept json
+// @Produce json
+// @Param        id   path      int  true  "ID транзакции"
+// @Router /trx/{id} [delete]
 func (tc TrxController) Delete(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
@@ -194,9 +224,10 @@ func (tc TrxController) Delete(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("failed to delete trx: %s", err.Error()),
 		})
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusNoContent, gin.H{
 		"message": "transaction was deleted",
 	})
 }

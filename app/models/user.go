@@ -15,10 +15,10 @@ const (
 )
 
 // Структура ответа на GET запрос
-type GetResponse struct {
+type UserGetResponse struct {
 	Email      *string `json:"email"`
-	First_name string  `json:"first_name"`
-	Last_name  string  `json:"last_name"`
+	FirstName  string  `json:"first_name"`
+	LastName   string  `json:"last_name"`
 	Patronymic string  `json:"patronymic"`
 	Gender     Gender  `json:"gender"`
 	Birthday   string  `json:"birthday"`
