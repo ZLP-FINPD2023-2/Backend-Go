@@ -31,9 +31,10 @@ type Env struct {
 func NewEnv() Env {
 	env := Env{}
 	// App
-	viper.SetDefault("HOST", "localhost:8080")
+	viper.SetDefault("HOST", "localhost")
 	viper.SetDefault("SERVER_PORT", "8080")
 	viper.SetDefault("SECRET_KEY", "secret_key")
+	viper.SetDefault("GIN_MODE", "debug")
 	// DB
 	viper.SetDefault("POSTGRES_USER", "admin")
 	viper.SetDefault("POSTGRES_PASSWORD", "password")
