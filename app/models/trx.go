@@ -9,11 +9,11 @@ import (
 )
 
 type TrxRequest struct {
-	Title      string `json:"title"`
-	Date       string `json:"date" validate:"required,isNotFutureDate"`
-	Amount     string `json:"amount" validate:"required,numeric"`
-	BudgetFrom *uint  `json:"from"`
-	BudgetTo   *uint  `json:"to"`
+	Title      string  `json:"title"`
+	Date       string  `json:"date" validate:"required,isNotFutureDate"`
+	Amount     float64 `json:"amount" validate:"required,numeric"`
+	BudgetFrom *uint   `json:"from"`
+	BudgetTo   *uint   `json:"to"`
 }
 
 type TrxResponse struct {
@@ -26,8 +26,8 @@ type TrxResponse struct {
 }
 
 type TrxPatchRequest struct {
-	Title  string `json:"title"`
-	Amount string `json:"amount"`
+	Title  string  `json:"title"`
+	Amount float64 `json:"amount"`
 }
 
 type Trx struct {

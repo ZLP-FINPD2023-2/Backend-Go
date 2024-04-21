@@ -37,6 +37,16 @@ func (r TrxRepository) Create(model *models.Trx) error {
 	return r.Database.Create(&model).Error
 }
 
+func (r TrxRepository) Get(id uint, UserID uint) (models.Trx, error) {
+	var trx models.Trx
+	err := r.Database.Where("user_id = ? AND id = ?", UserID, id).First(&trx).Error
+	if err != nil {
+		return models.Trx{}, err
+	}
+
+	return trx, nil
+}
+
 func (r TrxRepository) List(userID uint, dateFrom, dateTo time.Time, minAmount, maxAmount decimal.Decimal) ([]models.Trx, error) {
 	var trxs []models.Trx
 	query := r.Database.Where("user_id = ?", userID)

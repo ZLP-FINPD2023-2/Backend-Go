@@ -100,16 +100,37 @@ func (s TrxService) List(c *gin.Context, userID uint) ([]models.TrxResponse, err
 	return trxResponses, nil
 }
 
+func (s TrxService) Get(c *gin.Context, userID uint) (models.TrxResponse, error) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return models.TrxResponse{}, nil
+	}
+
+	trx, err := s.repository.Get(uint(id), userID)
+	if err != nil {
+		return models.TrxResponse{}, err
+	}
+
+	resp := models.TrxResponse{
+		ID:         trx.ID,
+		Title:      trx.Title,
+		Date:       trx.Date.Format(constants.DateFormat),
+		Amount:     trx.Amount,
+		BudgetFrom: convertBudgetID(trx.BudgetFrom),
+		BudgetTo:   convertBudgetID(trx.BudgetTo),
+	}
+
+	return resp, nil
+}
+
 func (s TrxService) Create(trxRequest *models.TrxRequest, userID uint) (models.TrxResponse, error) {
 	date, err := time.Parse(constants.DateFormat, trxRequest.Date)
 	if err != nil {
 		return models.TrxResponse{}, err
 	}
 
-	amount, err := decimal.NewFromString(trxRequest.Amount)
-	if err != nil {
-		return models.TrxResponse{}, err
-	}
+	amount := decimal.NewFromFloat(trxRequest.Amount)
 
 	// TODO: убрать этот позор, добавить foreign keys
 	/*_, err = s.budgetRepository.Get(trxRequest.BudgetTo, userID)
@@ -175,11 +196,8 @@ func (s TrxService) Patch(c *gin.Context, transaction models.TrxPatchRequest, us
 	}
 
 	var amount decimal.Decimal
-	if transaction.Amount != "" {
-		currAmount, err := decimal.NewFromString(transaction.Amount)
-		if err != nil {
-			return models.TrxResponse{}, err
-		}
+	if transaction.Amount != 0 {
+		currAmount := decimal.NewFromFloat(transaction.Amount)
 		amount = currAmount
 	}
 

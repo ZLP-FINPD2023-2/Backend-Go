@@ -221,17 +221,14 @@ func (s GoalService) Get(c *gin.Context, userID uint) (models.GoalCalcResponse, 
 }
 
 func (s GoalService) Store(request *models.GoalStoreRequest, userID uint) (models.GoalResponse, error) {
-	targetAmount, err := decimal.NewFromString(request.TargetAmount)
-	if err != nil {
-		return models.GoalResponse{}, err
-	}
+	targetAmount := decimal.NewFromFloat(request.TargetAmount)
 	goal := models.Goal{
 		UserID:       userID,
 		TargetAmount: targetAmount,
 		Title:        request.Title,
 	}
 
-	err = s.repository.Create(&goal)
+	err := s.repository.Create(&goal)
 	if err != nil {
 		return models.GoalResponse{}, err
 	}
@@ -256,11 +253,8 @@ func (s GoalService) Update(c *gin.Context, req models.GoalUpdateRequest, userID
 	}
 
 	var targetAmount decimal.Decimal
-	if req.TargetAmount != "" {
-		amount, err := decimal.NewFromString(req.TargetAmount)
-		if err != nil {
-			return models.GoalResponse{}, err
-		}
+	if req.TargetAmount != 0 {
+		amount := decimal.NewFromFloat(req.TargetAmount)
 		targetAmount = amount
 	}
 

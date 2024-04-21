@@ -34,7 +34,7 @@ func NewTrxController(
 // @summary List trx
 // @tags trx
 // @Description Получение транзакции
-// @ID get_trx
+// @ID list_trx
 // @Accept json
 // @Produce json
 // @Param amount_min query number false "Минимальная сумма"
@@ -73,6 +73,36 @@ func (tc TrxController) List(c *gin.Context) {
 		})
 	}
 	c.JSON(http.StatusOK, trxResponses)
+}
+
+// @Security ApiKeyAuth
+// @summary Get trx
+// @tags trx
+// @Description Получение транзакции
+// @ID get_trx
+// @Accept json
+// @Produce json
+// @Param id  path  int  true  "ID транзакции"
+// @Success 200 {object} models.TrxResponse
+// @Router /trx/{id} [get]
+func (tc TrxController) Get(c *gin.Context) {
+	userID, ok := c.Get(constants.UserID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
+		})
+		return
+	}
+
+	resp, err := tc.service.Get(c, userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("failed to get trx: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }
 
 // Создание

@@ -22,8 +22,8 @@ func (m Goal) TableName() string {
 // Requests/Responses
 // / Store
 type GoalStoreRequest struct {
-	Title        string `json:"title" validate:"required"`
-	TargetAmount string `json:"target_amount" validate:"required,numeric"`
+	Title        string  `json:"title" validate:"required"`
+	TargetAmount float64 `json:"target_amount" validate:"required,numeric"`
 }
 
 type GoalCalcResponse struct {
@@ -42,6 +42,6 @@ type GoalResponse struct {
 
 // Update
 type GoalUpdateRequest struct {
-	Title        string `json:"title"`
-	TargetAmount string `json:"target_amount"`
+	Title        string  `json:"title"`
+	TargetAmount float64 `json:"target_amount"`
 }
