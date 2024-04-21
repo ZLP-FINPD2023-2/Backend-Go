@@ -14,7 +14,7 @@ res=$(curl -s -X POST "$api_url/$goal_url" \
   -d \
   '{
     "title": "Велосипед_'"$RANDOM"'",
-    "target_amount": "'"$RANDOM"'"
+    "target_amount": '"$RANDOM"'
   }'
 )
 

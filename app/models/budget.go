@@ -38,8 +38,10 @@ type BudgetGetResponse struct {
 type Budget struct {
 	gorm.Model
 	UserID uint
+	User   User `gorm:"foreignKey:UserID"`
 	Title  string
 	GoalID uint
+	Goal   Goal `gorm:"foreignKey:GoalID"`
 }
 
 type BudgetChanges struct {

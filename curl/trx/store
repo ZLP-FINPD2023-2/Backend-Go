@@ -17,7 +17,7 @@ res=$(curl -s -X POST "$api_url/$trx_url" \
   -d \
   '{
     "title": "Велосипед_'"$RANDOM"'",
-    "amount": "'"$RANDOM"'",
+    "amount": '"$RANDOM"',
     "date": "'"$date_from"'",
     "budget_from": '"$budget_from_id"',
     "budget_to": '"$budget_to_id"'

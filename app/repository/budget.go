@@ -58,8 +58,8 @@ func (r BudgetRepository) Get(id uint, userID uint) (models.Budget, error) {
 func (r BudgetRepository) GetBudgetAmount(budgetID, userID uint, date time.Time) (decimal.Decimal, error) {
 	var amount decimal.Decimal
 	err := r.Database.Model(&models.Trx{}).
-		Select("SUM(CASE WHEN budget_to = ? THEN amount ELSE 0 END) - "+
-			"SUM(CASE WHEN budget_from = ? THEN amount ELSE 0 END)", budgetID, budgetID).
+		Select("SUM(CASE WHEN budget_to = ? THEN CAST(amount AS DECIMAL) ELSE 0 END) - "+
+			"SUM(CASE WHEN budget_from = ? THEN CAST(amount AS DECIMAL) ELSE 0 END)", budgetID, budgetID).
 		Where("user_id = ? AND date <= ?", userID, date).
 		Group("user_id").
 		Row().
@@ -73,8 +73,8 @@ func (r BudgetRepository) GetBudgetAmount(budgetID, userID uint, date time.Time)
 
 func (r TrxRepository) GetBudgetChanges(budgetID, userID uint, dateFrom, dateTo time.Time) ([]models.BudgetChanges, error) {
 	var changes []models.BudgetChanges
-	query := r.Database.Model(&models.Trx{}).Select("SUM(CASE WHEN budget_to = ? THEN amount ELSE 0 END) - "+
-		"SUM(CASE WHEN budget_from = ? THEN amount ELSE 0 END) as amount_change, date", budgetID, budgetID).
+	query := r.Database.Model(&models.Trx{}).Select("SUM(CASE WHEN budget_to = ? THEN CAST(amount AS DECIMAL) ELSE 0 END) - "+
+		"SUM(CASE WHEN budget_from = ? THEN CAST(amount AS DECIMAL) ELSE 0 END) as amount_change, date", budgetID, budgetID).
 		Where("user_id = ?", userID).
 		Where("budget_to = ? or budget_from = ?", budgetID, budgetID).
 		Where("date > ?", dateFrom)

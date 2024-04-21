@@ -10,6 +10,7 @@ import (
 type Goal struct {
 	gorm.Model
 	UserID       uint
+	User         User `gorm:"foreignKey:UserID"`
 	Title        string
 	TargetAmount decimal.Decimal `sql:"type:decimal(20,2);"`
 }

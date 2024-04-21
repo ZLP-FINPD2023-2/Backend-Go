@@ -92,8 +92,8 @@ func (uc UserController) Get(c *gin.Context) {
 
 	response := models.UserGetResponse{
 		Email:      user.Email,
-		First_name: user.FirstName,
-		Last_name:  user.LastName,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
 		Patronymic: user.Patronymic,
 		Gender:     user.Gender,
 		Birthday:   user.Birthday.Format(constants.DateFormat),
