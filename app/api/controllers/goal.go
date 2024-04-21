@@ -89,6 +89,7 @@ func (gc GoalController) Get(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("failed to get goal: %s", err.Error()),
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, goal)
