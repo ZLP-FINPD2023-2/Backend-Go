@@ -7,14 +7,16 @@ fi
 
 token=${USER_TOKEN:-$("${BASH_SOURCE%/*}"/../auth/login | jq -r '.token')}
 
-# Отправляем POST-запрос для создания цели
-res=$(curl -s -X POST "$api_url/$goal_url" \
+goal_id=${1:-$("${BASH_SOURCE%/*}"/../goal/list | jq -r '.[0].id')}
+
+# Отправляем POST-запрос для создания бюджета
+res=$(curl -s -X POST "$api_url/$budget_url" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $token" \
   -d \
   '{
-    "title": "Велосипед_'"$RANDOM"'",
-    "target_amount": "'"$RANDOM"'"
+    "title": "Вклад_'"$RANDOM"'",
+    "goal_id": '"$goal_id"'
   }'
 )
 

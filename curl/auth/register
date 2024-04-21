@@ -12,31 +12,15 @@ res=$(curl -s -X POST "$api_url/$register_url" \
   '{
     "email": "'"$user_email"'",
     "password": "'"$user_password"'",
-    "firstname": "Oleg",
-    "lastname": "Safronov",
+    "first_name": "Oleg",
+    "last_name": "Safronov",
     "birthday": "18-10-2004",
     "gender": "Male"
   }'
 )
 
 # Проверяем, успешна ли регистрация
-if ! echo "$res" | jq -r '.token' 1>/dev/null 2>&1; then
-    echo "$res" | jq
-    exit 1
-fi
-
-# Отправляем POST-запрос для авторизации пользователя
-res=$(curl -s -X POST "$api_url/$login_url" \
-  -H "Content-Type: application/json" \
-  -d \
-  '{
-    "email": "'"$user_email"'",
-    "password": "'"$user_password"'"
-  }'
-)
-
-# Проверяем, успешна ли авторизация
-if ! echo "$res" | jq -r '.token' 1>/dev/null 2>&1; then
+if ! echo "$res" | jq -re '.email' 1>/dev/null 2>&1; then
     echo "$res" | jq
     exit 1
 fi

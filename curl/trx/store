@@ -7,14 +7,20 @@ fi
 
 token=${USER_TOKEN:-$("${BASH_SOURCE%/*}"/../auth/login | jq -r '.token')}
 
-# Отправляем POST-запрос для создания цели
-res=$(curl -s -X POST "$api_url/$goal_url" \
+budget_from_id=${1:-null}
+budget_to_id=${2:-$("${BASH_SOURCE%/*}"/../budget/list | jq -r '.[0].id')}
+
+# Отправляем POST-запрос для создания транзакции
+res=$(curl -s -X POST "$api_url/$trx_url" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $token" \
   -d \
   '{
     "title": "Велосипед_'"$RANDOM"'",
-    "target_amount": "'"$RANDOM"'"
+    "amount": "'"$RANDOM"'",
+    "date": "'"$date_from"'",
+    "budget_from": '"$budget_from_id"',
+    "budget_to": '"$budget_to_id"'
   }'
 )
 
