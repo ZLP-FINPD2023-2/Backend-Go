@@ -1,0 +1,15 @@
+app:
+  host: dev.zlp-lfp.ru
+  port: 8080
+  nodePort:
+  imageName: ghcr.io/zlp-finpd2023-2/backend-go:dev
+  secret: change_me
+  mode: release
+  replicas: 1
+
+db:
+  host: db
+  port: 5432
+  user: admin
+  password: password
+  name: postgres

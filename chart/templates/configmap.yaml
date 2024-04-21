@@ -1,0 +1,24 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Chart.Name }}"
+data:
+  HOST: "{{ .Values.app.host }}"
+  SERVER_PORT: "{{ .Values.app.port }}"
+  SECRET_KEY: "{{ .Values.app.secret }}"
+  GIN_MODE: "{{ .Values.app.mode }}"
+
+  ALLOWED_ORIGINS: "*"
+  ALLOWED_METHODS: "GET HEAD POST PUT DELETE OPTIONS PATCH"
+  ALLOWED_HEADERS: "Content-Type Authorization Accept Cache-Control Allow"
+
+  LOG_OUTPUT: "logs"
+  LOG_LEVEL: "debug"
+
+  POSTGRES_USER: "{{ .Values.db.user }}"
+  POSTGRES_PASSWORD: "{{ .Values.db.password }}"
+  POSTGRES_DB: "{{ .Values.db.name }}"
+  DB_HOST: "{{ .Values.db.host }}"
+  DB_PORT: "{{ .Values.db.port }}"
+  DB_SSL_MODE: "disable"
