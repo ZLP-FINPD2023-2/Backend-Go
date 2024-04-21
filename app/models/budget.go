@@ -29,10 +29,10 @@ type BudgetPatchResponse struct {
 }
 
 type BudgetGetResponse struct {
-	Title   string                        `json:"title"`
-	ID      uint                          `json:"id"`
-	Goal    uint                          `json:"goal"`
-	Amounts map[time.Time]decimal.Decimal `json:"amounts"`
+	Title   string                     `json:"title"`
+	ID      uint                       `json:"id"`
+	Goal    uint                       `json:"goal"`
+	Amounts map[string]decimal.Decimal `json:"amounts"`
 }
 
 type Budget struct {
@@ -40,6 +40,11 @@ type Budget struct {
 	UserID uint
 	Title  string
 	GoalID uint
+}
+
+type BudgetChanges struct {
+	AmountChange decimal.Decimal
+	Date         time.Time
 }
 
 func (b Budget) TableName() string {

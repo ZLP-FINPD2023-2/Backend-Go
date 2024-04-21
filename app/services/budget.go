@@ -17,23 +17,20 @@ import (
 )
 
 type BudgetService struct {
-	logger         lib.Logger
-	repository     repository.BudgetRepository
-	goalRepository repository.GoalRepository
-	trxRepository  repository.TrxRepository
+	logger        lib.Logger
+	repository    repository.BudgetRepository
+	trxRepository repository.TrxRepository
 }
 
 func NewBudgetService(
 	logger lib.Logger,
 	repository repository.BudgetRepository,
-	goalRepository repository.GoalRepository,
 	trxRepository repository.TrxRepository,
 ) domains.BudgetService {
 	return BudgetService{
-		logger:         logger,
-		repository:     repository,
-		goalRepository: goalRepository,
-		trxRepository:  trxRepository,
+		logger:        logger,
+		repository:    repository,
+		trxRepository: trxRepository,
 	}
 }
 
@@ -73,6 +70,10 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 		dateTo = dateToTemp
 	}
 
+	if !dateTo.IsZero() && dateTo.Before(dateFrom) {
+		return models.BudgetGetResponse{}, errors.New("date_from time goes after date_to")
+	}
+
 	budget, err := s.repository.Get(uint(id), userID)
 	if err != nil {
 		return models.BudgetGetResponse{}, err
@@ -86,40 +87,29 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 		startAmount = decimal.New(0, 0)
 	}
 
-	trxs, err := s.trxRepository.ListFromBudget(uint(id), userID, dateFrom, dateTo)
+	changes, err := s.trxRepository.GetBudgetChanges(uint(id), userID, dateFrom, dateTo)
 	if err != nil {
 		return models.BudgetGetResponse{}, err
 	}
 
-	budgetCalc := models.BudgetGetResponse{
+	resp := models.BudgetGetResponse{
 		ID:      budget.ID,
-		Title:   budget.Title,
 		Goal:    budget.GoalID,
-		Amounts: make(map[time.Time]decimal.Decimal),
+		Title:   budget.Title,
+		Amounts: make(map[string]decimal.Decimal),
 	}
 
 	var currAmount decimal.Decimal
-	if !dateFrom.Equal(time.Time{}) && !startAmount.Equals(decimal.Zero) {
+	if !dateFrom.IsZero() || !startAmount.Equal(decimal.Zero) {
+		resp.Amounts[dateFrom.Format(constants.DateFormat)] = startAmount
 		currAmount = startAmount
-		budgetCalc.Amounts[dateFrom] = startAmount
 	}
 
-	for _, v := range trxs {
-		if v.BudgetFrom == nil {
-			currAmount = currAmount.Add(v.Amount)
-			budgetCalc.Amounts[v.Date] = currAmount
-			continue
-		}
-
-		if v.BudgetFrom.Int64 == int64(id) {
-			currAmount = currAmount.Sub(v.Amount)
-		} else {
-			currAmount = currAmount.Add(v.Amount)
-		}
-		budgetCalc.Amounts[v.Date] = currAmount
+	for _, change := range changes {
+		currAmount = currAmount.Add(change.AmountChange)
+		resp.Amounts[change.Date.Format(constants.DateFormat)] = currAmount
 	}
-
-	return budgetCalc, nil
+	return resp, nil
 }
 
 func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResponse, error) {
@@ -144,6 +134,10 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 		dateTo = dateToTemp
 	}
 
+	if !dateTo.IsZero() && dateTo.Before(dateFrom) {
+		return nil, errors.New("date_from time goes after date_to")
+	}
+
 	budgets, err := s.repository.List(userID)
 	if err != nil {
 		return nil, err
@@ -151,6 +145,11 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 
 	var budgetsAmounts []models.BudgetGetResponse
 	for _, v := range budgets {
+		budget, err := s.repository.Get(v.ID, userID)
+		if err != nil {
+			return nil, err
+		}
+
 		startAmount, err := s.repository.GetBudgetAmount(v.ID, userID, dateFrom)
 		if err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
@@ -159,37 +158,27 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 			startAmount = decimal.New(0, 0)
 		}
 
-		trxs, err := s.trxRepository.ListFromBudget(v.ID, userID, dateFrom, dateTo)
+		changes, err := s.trxRepository.GetBudgetChanges(v.ID, userID, dateTo, dateFrom)
 		if err != nil {
 			return nil, err
 		}
 
 		budg := models.BudgetGetResponse{
-			ID:      v.ID,
-			Title:   v.Title,
-			Goal:    v.GoalID,
-			Amounts: make(map[time.Time]decimal.Decimal),
+			ID:      budget.ID,
+			Goal:    budget.GoalID,
+			Title:   budget.Title,
+			Amounts: make(map[string]decimal.Decimal),
 		}
 
 		var currAmount decimal.Decimal
-		if !dateFrom.Equal(time.Time{}) && !startAmount.Equals(decimal.Zero) {
+		if !dateFrom.IsZero() || !startAmount.Equal(decimal.Zero) {
+			budg.Amounts[dateFrom.Format(constants.DateFormat)] = startAmount
 			currAmount = startAmount
-			budg.Amounts[dateFrom] = startAmount
 		}
 
-		for _, trx := range trxs {
-			if trx.BudgetFrom == nil {
-				currAmount = currAmount.Add(trx.Amount)
-				budg.Amounts[trx.Date] = currAmount
-				continue
-			}
-
-			if trx.BudgetFrom.Int64 == int64(v.ID) {
-				currAmount = currAmount.Sub(trx.Amount)
-			} else {
-				currAmount = currAmount.Add(trx.Amount)
-			}
-			budg.Amounts[trx.Date] = currAmount
+		for _, change := range changes {
+			currAmount = currAmount.Add(change.AmountChange)
+			budg.Amounts[change.Date.Format(constants.DateFormat)] = currAmount
 		}
 
 		budgetsAmounts = append(budgetsAmounts, budg)
@@ -199,13 +188,6 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 }
 
 func (s BudgetService) Create(request *models.BudgetCreateRequest, userID uint) (models.BudgetCreateResponse, error) {
-	if request.Goal != 0 {
-		_, err := s.goalRepository.Get(request.Goal, userID)
-		if err != nil {
-			return models.BudgetCreateResponse{}, err
-		}
-	}
-
 	budget := models.Budget{
 		UserID: userID,
 		Title:  request.Title,

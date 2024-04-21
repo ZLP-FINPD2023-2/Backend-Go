@@ -3,7 +3,6 @@ package repository
 import (
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
-	"log"
 	"time"
 
 	"finapp/lib"
@@ -60,11 +59,10 @@ func (r TrxRepository) ListFromBudget(budgetID, userID uint, dateFrom time.Time,
 	query := r.Database.Where("user_id = ?", userID).
 		Where("budget_from = ? OR budget_to = ?", budgetID, budgetID).
 		Where("date > ?", dateFrom)
-	if !dateTo.Equal(time.Time{}) {
+	if !dateTo.IsZero() {
 		query = query.Where("date <= ?", dateTo)
 	}
 	err := query.Find(&trxs).Error
-	log.Println("PZD")
 	return trxs, err
 }
 

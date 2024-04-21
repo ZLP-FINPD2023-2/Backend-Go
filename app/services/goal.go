@@ -1,11 +1,13 @@
 package services
 
 import (
+	"database/sql"
 	"errors"
 	"finapp/constants"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
+	"sort"
 	"strconv"
 	"time"
 
@@ -19,15 +21,20 @@ type GoalService struct {
 	logger           lib.Logger
 	repository       repository.GoalRepository
 	budgetRepository repository.BudgetRepository
+	trxRepository    repository.TrxRepository
 }
 
 func NewGoalService(
 	logger lib.Logger,
 	repository repository.GoalRepository,
+	budgetRepository repository.BudgetRepository,
+	trxRepository repository.TrxRepository,
 ) domains.GoalService {
 	return GoalService{
-		logger:     logger,
-		repository: repository,
+		logger:           logger,
+		repository:       repository,
+		budgetRepository: budgetRepository,
+		trxRepository:    trxRepository,
 	}
 }
 
@@ -37,13 +44,27 @@ func (s GoalService) WithTrx(trxHandle *gorm.DB) domains.GoalService {
 }
 
 func (s GoalService) List(c *gin.Context, userID uint) ([]models.GoalCalcResponse, error) {
-	var date time.Time
-	if dateToStr := c.Query("date"); dateToStr != "" {
+	var (
+		dateFrom time.Time
+		dateTo   time.Time
+	)
+	if dateFromStr := c.Query("date_from"); dateFromStr != "" {
+		dateFromTemp, err := time.Parse(constants.DateFormat, dateFromStr)
+		if err != nil {
+			return nil, err
+		}
+		dateFrom = dateFromTemp
+	}
+	if dateToStr := c.Query("date_from"); dateToStr != "" {
 		dateToTemp, err := time.Parse(constants.DateFormat, dateToStr)
 		if err != nil {
 			return nil, err
 		}
-		date = dateToTemp
+		dateTo = dateToTemp
+	}
+
+	if !dateTo.IsZero() && dateTo.Before(dateFrom) {
+		return nil, errors.New("date_from time goes after date_to")
 	}
 
 	goals, err := s.repository.List(userID)
@@ -58,22 +79,51 @@ func (s GoalService) List(c *gin.Context, userID uint) ([]models.GoalCalcRespons
 			return nil, err
 		}
 
-		calc := models.GoalCalcResponse{
+		g := models.GoalCalcResponse{
 			ID:           goal.ID,
 			Title:        goal.Title,
 			TargetAmount: goal.TargetAmount,
-			Amount:       make(map[time.Time]decimal.Decimal),
+			Amounts:      make(map[string]decimal.Decimal),
 		}
 
+		changes := make(map[time.Time]decimal.Decimal)
 		for _, v := range budgets {
-			amount, err := s.budgetRepository.GetBudgetAmount(v.ID, userID, date)
+			amount, err := s.budgetRepository.GetBudgetAmount(v.ID, userID, dateFrom)
+			if err != nil {
+				if !errors.Is(err, sql.ErrNoRows) {
+					return nil, err
+				}
+				amount = decimal.Zero
+			}
+			if !dateFrom.IsZero() {
+				g.Amounts[dateFrom.Format(constants.DateFormat)] =
+					g.Amounts[dateFrom.Format(constants.DateFormat)].Add(amount)
+			}
+
+			budgetChanges, err := s.trxRepository.GetBudgetChanges(v.ID, userID, dateFrom, dateTo)
 			if err != nil {
 				return nil, err
 			}
 
-			calc.Amount[date] = calc.Amount[date].Add(amount)
+			for _, change := range budgetChanges {
+				changes[change.Date] = changes[change.Date].Add(change.AmountChange)
+			}
 		}
-		resp = append(resp, calc)
+
+		dates := make([]time.Time, 0, len(changes))
+		for k, _ := range changes {
+			dates = append(dates, k)
+		}
+		sort.Slice(dates, func(i int, j int) bool {
+			return dates[i].Before(dates[j])
+		})
+
+		currAmountState := g.Amounts[dateFrom.Format(constants.DateFormat)]
+		for _, v := range dates {
+			currAmountState = currAmountState.Add(changes[v])
+			g.Amounts[v.Format(constants.DateFormat)] = currAmountState
+		}
+		resp = append(resp, g)
 	}
 
 	return resp, err
@@ -89,13 +139,27 @@ func (s GoalService) Get(c *gin.Context, userID uint) (models.GoalCalcResponse, 
 		return models.GoalCalcResponse{}, err
 	}
 
-	var date time.Time
-	if dateToStr := c.Query("date"); dateToStr != "" {
+	var (
+		dateFrom time.Time
+		dateTo   time.Time
+	)
+	if dateFromStr := c.Query("date_from"); dateFromStr != "" {
+		dateFromTemp, err := time.Parse(constants.DateFormat, dateFromStr)
+		if err != nil {
+			return models.GoalCalcResponse{}, err
+		}
+		dateFrom = dateFromTemp
+	}
+	if dateToStr := c.Query("date_from"); dateToStr != "" {
 		dateToTemp, err := time.Parse(constants.DateFormat, dateToStr)
 		if err != nil {
 			return models.GoalCalcResponse{}, err
 		}
-		date = dateToTemp
+		dateTo = dateToTemp
+	}
+
+	if !dateTo.IsZero() && dateTo.Before(dateFrom) {
+		return models.GoalCalcResponse{}, errors.New("date_from time goes after date_to")
 	}
 
 	goal, err := s.repository.Get(uint(id), userID)
@@ -112,19 +176,48 @@ func (s GoalService) Get(c *gin.Context, userID uint) (models.GoalCalcResponse, 
 		ID:           goal.ID,
 		Title:        goal.Title,
 		TargetAmount: goal.TargetAmount,
-		Amount:       make(map[time.Time]decimal.Decimal),
+		Amounts:      make(map[string]decimal.Decimal),
 	}
 
+	changes := make(map[time.Time]decimal.Decimal)
 	for _, v := range budgets {
-		amount, err := s.budgetRepository.GetBudgetAmount(v.ID, userID, date)
+		amount, err := s.budgetRepository.GetBudgetAmount(v.ID, userID, dateFrom)
+		if err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return models.GoalCalcResponse{}, err
+			}
+			amount = decimal.Zero
+		}
+		if !dateFrom.IsZero() {
+			resp.Amounts[dateFrom.Format(constants.DateFormat)] =
+				resp.Amounts[dateFrom.Format(constants.DateFormat)].Add(amount)
+		}
+
+		budgetChanges, err := s.trxRepository.GetBudgetChanges(v.ID, userID, dateFrom, dateTo)
 		if err != nil {
 			return models.GoalCalcResponse{}, err
 		}
 
-		resp.Amount[date] = resp.Amount[date].Add(amount)
+		for _, change := range budgetChanges {
+			changes[change.Date] = changes[change.Date].Add(change.AmountChange)
+		}
 	}
 
-	return models.GoalCalcResponse{}, nil
+	dates := make([]time.Time, 0, len(changes))
+	for k, _ := range changes {
+		dates = append(dates, k)
+	}
+	sort.Slice(dates, func(i int, j int) bool {
+		return dates[i].Before(dates[j])
+	})
+
+	currAmountState := resp.Amounts[dateFrom.Format(constants.DateFormat)]
+	for _, v := range dates {
+		currAmountState = currAmountState.Add(changes[v])
+		resp.Amounts[v.Format(constants.DateFormat)] = currAmountState
+	}
+
+	return resp, nil
 }
 
 func (s GoalService) Store(request *models.GoalStoreRequest, userID uint) (models.GoalResponse, error) {

@@ -19,7 +19,7 @@ type TrxRequest struct {
 type TrxResponse struct {
 	ID         uint            `json:"id"`
 	Title      string          `json:"title"`
-	Date       time.Time       `json:"date"`
+	Date       string          `json:"date"`
 	Amount     decimal.Decimal `json:"amount"`
 	BudgetFrom *uint           `json:"from"`
 	BudgetTo   *uint           `json:"to"`

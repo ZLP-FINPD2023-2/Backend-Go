@@ -30,7 +30,6 @@ func NewGoalController(
 
 // Получение
 
-// @Deprecated
 // @Security ApiKeyAuth
 // @summary List goals
 // @tags goal
@@ -38,7 +37,8 @@ func NewGoalController(
 // @ID goal-list
 // @Accept json
 // @Produce json
-// @Param date query string false "Дата в формате 18-10-2004"
+// @Param date_from query string false "Дата начала периода в формате 18-10-2004"
+// @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
 // @Success 200 {array} models.GoalResponse
 // @Router /goal [get]
 func (gc GoalController) List(c *gin.Context) {
@@ -63,18 +63,18 @@ func (gc GoalController) List(c *gin.Context) {
 	c.JSON(http.StatusOK, goals)
 }
 
-// @Deprecated
 // @Security ApiKeyAuth
-// @summary List goals
+// @summary Get goal
 // @tags goal
 // @Description Получение бюджетов
 // @ID goal-get
 // @Accept json
 // @Produce json
 // @Param id path integer false "id цели"
-// @Param date query string false "Дата в формате 18-10-2004"
+// @Param date_from query string false "Дата начала периода в формате 18-10-2004"
+// @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
 // @Success 200 {object} models.GoalResponse
-// @Router /goal [get]
+// @Router /goal/{id} [get]
 func (gc GoalController) Get(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
