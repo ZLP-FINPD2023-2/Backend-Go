@@ -99,16 +99,35 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 		Amounts: make(map[string]decimal.Decimal),
 	}
 
-	var currAmount decimal.Decimal
+	var (
+		currAmount decimal.Decimal
+		currDate   time.Time
+	)
 	if !dateFrom.IsZero() || !startAmount.Equal(decimal.Zero) {
 		resp.Amounts[dateFrom.Format(constants.DateFormat)] = startAmount
 		currAmount = startAmount
+		currDate = dateFrom
 	}
 
 	for _, change := range changes {
+		if !currDate.IsZero() {
+			for !currDate.Equal(change.Date) && currDate.Before(change.Date) {
+				currDate = currDate.Add(24 * time.Hour)
+				resp.Amounts[currDate.Format(constants.DateFormat)] = currAmount
+			}
+		}
 		currAmount = currAmount.Add(change.AmountChange)
 		resp.Amounts[change.Date.Format(constants.DateFormat)] = currAmount
+		currDate = change.Date
 	}
+
+	if !dateTo.IsZero() {
+		for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
+			currDate = currDate.Add(24 * time.Hour)
+			resp.Amounts[currDate.Format(constants.DateFormat)] = currAmount
+		}
+	}
+
 	return resp, nil
 }
 
@@ -158,7 +177,7 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 			startAmount = decimal.New(0, 0)
 		}
 
-		changes, err := s.trxRepository.GetBudgetChanges(v.ID, userID, dateTo, dateFrom)
+		changes, err := s.trxRepository.GetBudgetChanges(v.ID, userID, dateFrom, dateTo)
 		if err != nil {
 			return nil, err
 		}
@@ -170,15 +189,33 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 			Amounts: make(map[string]decimal.Decimal),
 		}
 
-		var currAmount decimal.Decimal
+		var (
+			currAmount decimal.Decimal
+			currDate   time.Time
+		)
 		if !dateFrom.IsZero() || !startAmount.Equal(decimal.Zero) {
 			budg.Amounts[dateFrom.Format(constants.DateFormat)] = startAmount
 			currAmount = startAmount
+			currDate = dateFrom
 		}
 
 		for _, change := range changes {
+			if !currDate.IsZero() {
+				for !currDate.Equal(change.Date) && currDate.Before(change.Date) {
+					currDate = currDate.Add(24 * time.Hour)
+					budg.Amounts[currDate.Format(constants.DateFormat)] = currAmount
+				}
+			}
 			currAmount = currAmount.Add(change.AmountChange)
 			budg.Amounts[change.Date.Format(constants.DateFormat)] = currAmount
+			currDate = change.Date
+		}
+
+		if !dateTo.IsZero() {
+			for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
+				currDate = currDate.Add(24 * time.Hour)
+				budg.Amounts[currDate.Format(constants.DateFormat)] = currAmount
+			}
 		}
 
 		budgetsAmounts = append(budgetsAmounts, budg)
