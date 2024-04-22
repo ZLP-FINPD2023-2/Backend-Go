@@ -11,7 +11,7 @@ export trx_url="trx"
 
 # Проверка доступности сервера
 if ! curl "$api_url/$health_url" 1>/dev/null 2>&1; then
-  echo "Server not available"
+  echo "Server not available" 1>&2
   exit 1;
 fi
 

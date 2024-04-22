@@ -17,7 +17,7 @@ res=$(curl -s -X GET "$api_url/$budget_url/$budget_id?date_from=$date_from&date_
 
 # Проверяем, успешно ли получение
 if echo "$res" | jq -re '.error' 1>/dev/null 2>&1; then
-    echo "$res" | jq
+    echo "$res" | jq 1>&2
     exit 1
 fi
 

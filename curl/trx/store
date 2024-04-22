@@ -26,7 +26,7 @@ res=$(curl -s -X POST "$api_url/$trx_url" \
 
 # Проверяем, успешно ли создание
 if echo "$res" | jq -re '.error' 1>/dev/null 2>&1; then
-    echo "$res" | jq
+    echo "$res" | jq 1>&2
     exit 1
 fi
 

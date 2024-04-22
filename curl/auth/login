@@ -17,7 +17,7 @@ res=$(curl -s -X POST "$api_url/$login_url" \
 
 # Проверяем, успешна ли авторизация
 if ! echo "$res" | jq -re '.token' 1>/dev/null 2>&1; then
-    echo "$res" | jq
+    echo "$res" | jq 1>&2
     exit 1
 fi
 
