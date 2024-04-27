@@ -32,6 +32,9 @@ func (s *ServeCommand) Run() lib.CommandRunner {
 
 		// Динамический хост в доке
 		docs.SwaggerInfo.Host = env.Host
+		if env.ServerPort != "" && env.Environment == "debug" {
+			docs.SwaggerInfo.Host += ":" + env.ServerPort
+		}
 
 		logger.Info("Running server")
 		if env.ServerPort == "" {

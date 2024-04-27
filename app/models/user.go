@@ -5,8 +5,6 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-
-	"finapp/lib/validators"
 )
 
 type Gender string
@@ -16,15 +14,25 @@ const (
 	Male   Gender = "Male"
 )
 
+// Структура ответа на GET запрос
+type UserGetResponse struct {
+	Email      *string `json:"email"`
+	FirstName  string  `json:"first_name"`
+	LastName   string  `json:"last_name"`
+	Patronymic string  `json:"patronymic"`
+	Gender     Gender  `json:"gender"`
+	Birthday   string  `json:"birthday"`
+}
+
 type User struct {
 	gorm.Model
-	Email      *string `gorm:"unique" validate:"required,email"`
-	Password   string  `validate:"required,min=8"`
-	FirstName  string  `validate:"required"`
-	LastName   string  `validate:"required"`
+	Email      *string `gorm:"unique"`
+	Password   string
+	FirstName  string
+	LastName   string
 	Patronymic string
-	Gender     Gender    `validate:"oneof=Male Female"`
-	Birthday   time.Time `validate:"required"`
+	Gender     Gender
+	Birthday   time.Time
 }
 
 // TableName gives table name of model
@@ -33,25 +41,12 @@ func (u User) TableName() string {
 }
 
 func (user *User) BeforeSave(tx *gorm.DB) error {
-	// Валидация
-	validate := validators.CustomValidator()
-	if err := validate.Struct(user); err != nil {
+	// Хэширование пароля
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
 		return err
 	}
-
-	// Хэширование пароля
-	hashPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	user.Password = string(hashPassword)
 
 	return nil
-}
-
-// Структура ответа на GET запрос
-type GetResponse struct {
-	Email      *string `json:"email"`
-	First_name string  `json:"first_name"`
-	Last_name  string  `json:"last_name"`
-	Patronymic string  `json:"patronymic"`
-	Gender     Gender  `json:"gender"`
-	Birthday   string  `json:"birthday"`
 }

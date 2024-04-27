@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"finapp/lib/validators"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,34 +14,34 @@ import (
 )
 
 type BudgetController struct {
-	logger      lib.Logger
-	service     domains.BudgetService
-	authService domains.AuthService
+	logger  lib.Logger
+	service domains.BudgetService
 }
 
 func NewBudgetController(
 	logger lib.Logger,
 	service domains.BudgetService,
-	authService domains.AuthService,
 ) BudgetController {
 	return BudgetController{
-		logger:      logger,
-		service:     service,
-		authService: authService,
+		logger:  logger,
+		service: service,
 	}
 }
 
 // Получение
 
-// @Security		ApiKeyAuth
-// @summary		Get budgets
-// @tags			budget
-// @Description	Получение бюджетов
-// @ID				budget-get
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}	models.BudgetGetResponse
-// @Router			/budget [get]
+// @Security ApiKeyAuth
+// @summary Get budget
+// @tags budget
+// @Description Получение бюджета
+// @ID budget-get
+// @Accept json
+// @Produce json
+// @Param        id   path      int  true  "ID бюджета"
+// @Param date_from query string false "Дата начала периода в формате 18-10-2004"
+// @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
+// @Success 200 {object} models.BudgetGetResponse
+// @Router /budget/{id} [get]
 func (bc BudgetController) Get(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
@@ -49,7 +51,7 @@ func (bc BudgetController) Get(c *gin.Context) {
 		return
 	}
 
-	budgets, err := bc.service.List(userID.(uint))
+	budget, err := bc.service.Get(c, userID.(uint))
 	// TODO: Улучшить обработку ошибок
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -59,29 +61,56 @@ func (bc BudgetController) Get(c *gin.Context) {
 		return
 	}
 
-	var budgetResponses []models.BudgetGetResponse
-	for _, budget := range budgets {
-		budgetResponses = append(budgetResponses, models.BudgetGetResponse{
-			Title:  budget.Title,
-			ID:     budget.ID,
-			Amount: budget.Amount,
+	c.JSON(http.StatusOK, budget)
+}
+
+// Получение
+
+// @Security ApiKeyAuth
+// @summary List budgets
+// @tags budget
+// @Description Получение бюджетов
+// @ID budget-list
+// @Accept json
+// @Produce json
+// @Param date_from query string false "Дата начала периода в формате 18-10-2004"
+// @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
+// @Success 200 {array} models.BudgetGetResponse
+// @Router /budget [get]
+func (bc BudgetController) List(c *gin.Context) {
+	userID, ok := c.Get(constants.UserID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
 		})
+		return
 	}
 
-	c.JSON(http.StatusOK, budgetResponses)
+	budgets, err := bc.service.List(c, userID.(uint))
+	// TODO: Улучшить обработку ошибок
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":       "Failed to get budgets",
+			"description": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, budgets)
 }
 
 // Создание
 
-// @Security		ApiKeyAuth
-// @summary		Create budget
-// @tags			budget
-// @Description	Создание бюджета
-// @ID				budget-create
-// @Accept			json
-// @Produce		json
-// @Param			budget	body	models.BudgetCreateRequest	true	"Данные бюждета"
-// @Router			/budget [post]
+// @Security ApiKeyAuth
+// @summary Create budget
+// @tags budget
+// @Description Создание бюджета
+// @ID budget-create
+// @Accept json
+// @Produce json
+// @Param budget body models.BudgetCreateRequest true "Данные бюждета"
+// @Success 200 {object} models.BudgetCreateResponse
+// @Router /budget [post]
 func (bc BudgetController) Post(c *gin.Context) {
 	var budget models.BudgetCreateRequest
 
@@ -92,6 +121,13 @@ func (bc BudgetController) Post(c *gin.Context) {
 		return
 	}
 
+	if err := validators.IsValid(budget); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": validators.ParseValidationErrors(err),
+		})
+		return
+	}
+
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -100,14 +136,93 @@ func (bc BudgetController) Post(c *gin.Context) {
 		return
 	}
 
-	err := bc.service.Create(&budget, userID.(uint))
+	resp, err := bc.service.Create(&budget, userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
+	c.JSON(http.StatusOK, resp)
+}
+
+// Обновление
+
+// @Security ApiKeyAuth
+// @summary Patch budget
+// @tags budget
+// @Description Изменение бюджета
+// @ID budget-patch
+// @Accept json
+// @Produce json
+// @Param        id   path      int  true  "ID транзакции"
+// @Param budget body models.BudgetPatchRequest true "Данные бюждета"
+// @Success 200 {object} models.BudgetPatchResponse
+// @Router /budget/{id} [patch]
+func (bc BudgetController) Patch(c *gin.Context) {
+	var budget models.BudgetPatchRequest
+
+	if err := c.ShouldBindJSON(&budget); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	if err := validators.IsValid(budget); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": validators.ParseValidationErrors(err),
+		})
+		return
+	}
+
+	userID, ok := c.Get(constants.UserID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
+		})
+		return
+	}
+
+	newBudget, err := bc.service.Patch(c, budget, userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("failed to update budget: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, newBudget)
+}
+
+// Удаление
+
+// @Security ApiKeyAuth
+// @summary Delete budget
+// @tags budget
+// @Description Удаление бюджета
+// @ID budget-delete
+// @Accept json
+// @Produce json
+// @Param        id   path      int  true  "ID транзакции"
+// @Router /budget/{id} [delete]
+func (bc BudgetController) Delete(c *gin.Context) {
+	userID, ok := c.Get(constants.UserID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
+		})
+		return
+	}
+
+	if err := bc.service.Delete(c, userID.(uint)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("failed to delete budget: %s", err.Error()),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Budget added successfully",
+		"message": "budget deleted successfully",
 	})
 }

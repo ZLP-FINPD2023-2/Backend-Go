@@ -16,8 +16,11 @@ type BudgetRoutes struct {
 func (s BudgetRoutes) Setup() {
 	root := s.handler.Gin.Group("/api/v1").Use(s.authMiddleware.Handler())
 	{
-		root.GET("/budget", s.controller.Get)
+		root.GET("/budget/:id", s.controller.Get)
+		root.GET("/budget", s.controller.List)
 		root.POST("/budget", s.controller.Post)
+		root.DELETE("/budget/:id", s.controller.Delete)
+		root.PATCH("/budget/:id", s.controller.Patch)
 	}
 }
 

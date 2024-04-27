@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"finapp/lib/validators"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,34 +14,33 @@ import (
 )
 
 type GoalController struct {
-	logger      lib.Logger
-	service     domains.GoalService
-	authService domains.AuthService
+	logger  lib.Logger
+	service domains.GoalService
 }
 
 func NewGoalController(
 	logger lib.Logger,
 	service domains.GoalService,
-	authService domains.AuthService,
 ) GoalController {
 	return GoalController{
-		logger:      logger,
-		service:     service,
-		authService: authService,
+		logger:  logger,
+		service: service,
 	}
 }
 
 // Получение
 
-// @Security		ApiKeyAuth
-// @summary		List goals
-// @tags			goal
-// @Description	Получение бюджетов
-// @ID				goal-list
-// @Accept			json
-// @Produce		json
-// @Success		200	{array}	models.GoalGetResponse
-// @Router			/goal [get]
+// @Security ApiKeyAuth
+// @summary List goals
+// @tags goal
+// @Description Получение бюджетов
+// @ID goal-list
+// @Accept json
+// @Produce json
+// @Param date_from query string false "Дата начала периода в формате 18-10-2004"
+// @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
+// @Success 200 {array} models.GoalResponse
+// @Router /goal [get]
 func (gc GoalController) List(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
 	if !ok {
@@ -49,7 +50,7 @@ func (gc GoalController) List(c *gin.Context) {
 		return
 	}
 
-	goals, err := gc.service.List(userID.(uint))
+	goals, err := gc.service.List(c, userID.(uint))
 	// TODO: Улучшить обработку ошибок
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -59,35 +60,66 @@ func (gc GoalController) List(c *gin.Context) {
 		return
 	}
 
-	var goalResponses []models.GoalGetResponse
-	for _, goal := range goals {
-		goalResponses = append(goalResponses, models.GoalGetResponse{
-			Title:  goal.Title,
-			ID:     goal.ID,
-			Amount: goal.Amount,
+	c.JSON(http.StatusOK, goals)
+}
+
+// @Security ApiKeyAuth
+// @summary Get goal
+// @tags goal
+// @Description Получение бюджетов
+// @ID goal-get
+// @Accept json
+// @Produce json
+// @Param id path integer false "id цели"
+// @Param date_from query string false "Дата начала периода в формате 18-10-2004"
+// @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
+// @Success 200 {object} models.GoalResponse
+// @Router /goal/{id} [get]
+func (gc GoalController) Get(c *gin.Context) {
+	userID, ok := c.Get(constants.UserID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
 		})
+		return
 	}
 
-	c.JSON(http.StatusOK, goalResponses)
+	goal, err := gc.service.Get(c, userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("failed to get goal: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, goal)
 }
 
 // Создание
 
-// @Security		ApiKeyAuth
-// @summary		Create goal
-// @tags			goal
-// @Description	Создание бюджета
-// @ID				goal-create
-// @Accept			json
-// @Produce		json
-// @Param			goal	body	models.GoalCreateRequest	true	"Данные бюждета"
-// @Router			/goal [post]
-func (gc GoalController) Create(c *gin.Context) {
-	var goal models.GoalCreateRequest
+// @Security ApiKeyAuth
+// @summary Store goal
+// @tags goal
+// @Description Создание цели
+// @ID goal-create
+// @Accept json
+// @Produce json
+// @Param goal body models.GoalStoreRequest true "Данные бюждета"
+// @Success 200 {object} models.GoalResponse
+// @Router /goal [post]
+func (gc GoalController) Store(c *gin.Context) {
+	var goal models.GoalStoreRequest
 
 	if err := c.ShouldBindJSON(&goal); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request body",
+		})
+		return
+	}
+
+	if err := validators.IsValid(goal); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": validators.ParseValidationErrors(err),
 		})
 		return
 	}
@@ -100,15 +132,94 @@ func (gc GoalController) Create(c *gin.Context) {
 		return
 	}
 
-	err := gc.service.Create(&goal, userID.(uint))
+	resp, err := gc.service.Store(&goal, userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Goal added successfully",
+	c.JSON(http.StatusOK, resp)
+}
+
+// Обновление
+
+// @Security ApiKeyAuth
+// @summary Update goal
+// @tags goal
+// @Description Изменение цели
+// @ID goal-patch
+// @Accept json
+// @Produce json
+// @Param id path integer false "id цели"
+// @Param goal body models.GoalUpdateRequest true "Данные цели"
+// @Success 200 {object} models.GoalResponse
+// @Router /goal/{id} [patch]
+func (gc GoalController) Update(c *gin.Context) {
+	var goal models.GoalUpdateRequest
+
+	if err := c.ShouldBindJSON(&goal); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	if err := validators.IsValid(goal); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": validators.ParseValidationErrors(err),
+		})
+		return
+	}
+
+	userID, ok := c.Get(constants.UserID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
+		})
+		return
+	}
+
+	resp, err := gc.service.Update(c, goal, userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("failed to update goal: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// Удаление
+
+// @Security ApiKeyAuth
+// @summary Delete goal
+// @tags goal
+// @Description Удаление цели
+// @ID goal-delete
+// @Accept json
+// @Produce json
+// @Param id path integer false "id цели"
+// @Router /goal/{id} [delete]
+func (gc GoalController) Delete(c *gin.Context) {
+	userID, ok := c.Get(constants.UserID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
+		})
+		return
+	}
+
+	if err := gc.service.Delete(c, userID.(uint)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("failed to delete goal: %s", err.Error()),
+		})
+		return
+	}
+
+	c.JSON(http.StatusNoContent, gin.H{
+		"message": "goal was deleted",
 	})
 }

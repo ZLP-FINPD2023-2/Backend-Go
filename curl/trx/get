@@ -1,18 +1,25 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-API_URL="http://localhost:8080/api/v1"
-USER_URL="trx"
+# Base
+if ! source "${BASH_SOURCE%/*}/../base"; then
+  exit 1
+fi
 
-# Проверка наличия аргумента (токена)
-if [ $# -eq 0 ]; then
-    echo "Usage: $0 <token>"
+token=${USER_TOKEN:-$("${BASH_SOURCE%/*}"/../auth/login | jq -r '.token')}
+
+trx_id=${1:-$("${BASH_SOURCE%/*}"/list | jq -r '.[0].id')}
+
+# Отправляем GET-запрос для получения транзакции
+res=$(curl -s -X GET "$api_url/$trx_url/$trx_id" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $token"
+)
+
+# Проверяем, успешно ли получение
+if echo "$res" | jq -re '.error' 1>/dev/null 2>&1; then
+    echo "$res" | jq 1>&2
     exit 1
 fi
 
-TOKEN="$1"
-
-# Отправляем PATCH-запрос
-RESPONSE=$(curl -s -X GET $API_URL/$USER_URL \
-        -H "Authorization: Bearer $TOKEN")
-
-echo $RESPONSE | jq
+# Результат
+echo "$res" | jq

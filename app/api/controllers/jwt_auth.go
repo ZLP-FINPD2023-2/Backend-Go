@@ -1,13 +1,9 @@
 package controllers
 
 import (
-	"errors"
-	"net/http"
-	"strings"
-
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
+	"net/http"
 
 	"finapp/domains"
 	"finapp/lib"
@@ -37,20 +33,27 @@ func NewJWTAuthController(
 
 // Вход
 
-//	@summary		Login
-//	@tags			auth
-//	@Description	Вход пользователя
-//	@ID				login
-//	@Accept			json
-//	@Produce		json
-//	@Param			req	body	models.LoginRequest	true	"Данные пользователя"
-//	@Router			/auth/login [post]
+// @summary Login
+// @tags auth
+// @Description Вход пользователя
+// @ID login
+// @Accept json
+// @Produce json
+// @Param req body models.LoginRequest true "Данные пользователя"
+// @Router /auth/login [post]
 func (jwt JWTAuthController) Login(c *gin.Context) {
 	// Парсинг запроса
 	var q models.LoginRequest
 	if err := c.ShouldBindJSON(&q); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request body",
+		})
+		return
+	}
+
+	if err := validators.IsValid(q); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": validators.ParseValidationErrors(err),
 		})
 		return
 	}
@@ -82,22 +85,25 @@ func (jwt JWTAuthController) Login(c *gin.Context) {
 		return
 	}
 
+	// Создание ответа
+	response := models.LoginResponse{
+		Token: token,
+	}
+
 	// Отправка токена
-	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-	})
+	c.JSON(http.StatusOK, response)
 }
 
 // Регистрация
 
-//	@summary		Register
-//	@tags			auth
-//	@Description	Регистрация пользователя
-//	@ID				register
-//	@Accept			json
-//	@Produce		json
-//	@Param			user	body	models.RegisterRequest	true	"Данные пользователя"
-//	@Router			/auth/register [post]
+// @summary Register
+// @tags auth
+// @Description Регистрация пользователя
+// @ID register
+// @Accept json
+// @Produce json
+// @Param user body models.RegisterRequest true "Данные пользователя"
+// @Router /auth/register [post]
 func (jwt JWTAuthController) Register(c *gin.Context) {
 	// Парсинг запроса
 	var q models.RegisterRequest
@@ -108,48 +114,22 @@ func (jwt JWTAuthController) Register(c *gin.Context) {
 		return
 	}
 
+	if err := validators.IsValid(q); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": validators.ParseValidationErrors(err),
+		})
+		return
+	}
+
 	// Регистрация пользователя
-	if err := jwt.userService.Register(&q); err != nil {
-		// Ошибки валидации
-		var vErr validator.ValidationErrors
-		if errors.As(err, &vErr) {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": validators.ParseValidationErrors(vErr),
-			})
-			return
-		}
-
-		// Ошибка уникального значения
-		// TODO: Придумать обработчик получше
-		// Реально надо получше, а то это кринж
-		if strings.Contains(err.Error(), "UNIQUE") || strings.Contains(err.Error(), "duplicate") {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": gin.H{
-					"Email": "duplicate",
-				},
-			})
-			return
-		}
-
-		// Ошибка парсинга даты
-		if strings.Contains(err.Error(), "parsing time") {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": gin.H{
-					"birthday": "parse failed",
-				},
-			})
-			return
-		}
-
-		// Необработанные ошибки
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Validation failed",
+	user, err := jwt.userService.Register(&q)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to register user",
 		})
 		return
 	}
 
 	// Отправка ответа
-	c.JSON(http.StatusOK, gin.H{
-		"message": "User registered successfully",
-	})
+	c.JSON(http.StatusOK, user)
 }

@@ -1,17 +1,18 @@
 ---
 version: '3.9'
-name: backend-dev
+name: backend
 
 services:
   web:
-    env_file:
-      - path: .dev.env
-        required: true
     build:
+      dockerfile: ../Dockerfile
       context: ./app
-      dockerfile: ./docker/Dockerfile
+    command: ./finapp app:serve
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
+    env_file:
+      - path: .env
+        required: true
     depends_on:
       - db
 
@@ -20,7 +21,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - path: .dev.env
+      - path: .env
         required: true
 
 volumes:

@@ -1,25 +1,27 @@
 package validators
 
 import (
+	"finapp/constants"
+	"log"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 )
 
-func CustomValidator() *validator.Validate {
+func customValidator() *validator.Validate {
 	v := validator.New()
-	v.RegisterValidation("isNotFutureDate", IsNotFutureDate)
+	v.RegisterValidation("isNotFutureDate", isNotFutureDate)
 	return v
 }
 
-func IsNotFutureDate(fldLvl validator.FieldLevel) bool {
-	dateToValidate, ok := fldLvl.Field().Interface().(time.Time)
-	if !ok {
+func isNotFutureDate(fldLvl validator.FieldLevel) bool {
+	dateToValidateStr := fldLvl.Field().String()
+	dateToValidate, err := time.Parse(constants.DateFormat, dateToValidateStr)
+	if err != nil {
+		log.Println(err)
 		return false
 	}
-
 	dateToValidate = dateToValidate.UTC()
 	currentDate := time.Now().UTC()
-
 	return dateToValidate.Before(currentDate) || dateToValidate.Equal(currentDate)
 }

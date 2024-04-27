@@ -28,9 +28,11 @@ func NewDatabase(env Env, logger Logger) Database {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.GetGormLogger(),
 	})
+
 	if err != nil {
+		// Это же удобно...
 		logger.Info("Connect to sqlite...")
-		dsn := "test.db"
+		dsn = "test.db"
 		db, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{
 			Logger: logger.GetGormLogger(),
 		})

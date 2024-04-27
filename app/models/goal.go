@@ -1,45 +1,48 @@
 package models
 
 import (
-	"finapp/lib/validators"
 	"github.com/shopspring/decimal"
-
 	"gorm.io/gorm"
 )
 
+// DB
+// / Models
 type Goal struct {
 	gorm.Model
-	UserID uint   `validate:"required"`
-	Title  string `validate:"required" gorm:"unique"`
+	UserID       uint
+	User         User `gorm:"foreignKey:UserID"`
+	Title        string
+	TargetAmount decimal.Decimal `sql:"type:decimal(20,2);"`
 }
 
-type GoalCalc struct {
-	gorm.Model
-	UserID uint            `validate:"required"`
-	Title  string          `validate:"required" gorm:"unique"`
-	Amount decimal.Decimal `validate:"required" sql:"type:decimal(20,2);"`
-}
-
+// / Table Name
 func (m Goal) TableName() string {
 	return "goals"
 }
 
-func (m *Goal) BeforeSave(db *gorm.DB) error {
-	// Валидация
-	validate := validators.CustomValidator()
-	if err := validate.Struct(m); err != nil {
-		return err
-	}
-
-	return nil
+// Requests/Responses
+// / Store
+type GoalStoreRequest struct {
+	Title        string  `json:"title" validate:"required"`
+	TargetAmount float64 `json:"target_amount" validate:"required,numeric"`
 }
 
-type GoalCreateRequest struct {
-	Title string `json:"title"`
+type GoalCalcResponse struct {
+	ID           uint                       `json:"id"`
+	Title        string                     `json:"title"`
+	Amounts      map[string]decimal.Decimal `json:"amount"`
+	TargetAmount decimal.Decimal            `json:"target_amount"`
 }
 
-type GoalGetResponse struct {
-	Title  string          `json:"title"`
-	ID     uint            `json:"id"`
-	Amount decimal.Decimal `json:"amount"`
+// / Get
+type GoalResponse struct {
+	ID           uint            `json:"id"`
+	Title        string          `json:"title"`
+	TargetAmount decimal.Decimal `json:"target_amount"`
+}
+
+// Update
+type GoalUpdateRequest struct {
+	Title        string  `json:"title"`
+	TargetAmount float64 `json:"target_amount"`
 }

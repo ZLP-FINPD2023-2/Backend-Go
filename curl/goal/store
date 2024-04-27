@@ -7,15 +7,18 @@ fi
 
 token=${USER_TOKEN:-$("${BASH_SOURCE%/*}"/../auth/login | jq -r '.token')}
 
-goal_id=${1:-$("${BASH_SOURCE%/*}"/list | jq -r '.[0].id')}
-
-# Отправляем GET-запрос для получения цели
-res=$(curl -s -X GET "$api_url/$goal_url/$goal_id?date_from=${date_from}&date_to=${date_to}" \
+# Отправляем POST-запрос для создания цели
+res=$(curl -s -X POST "$api_url/$goal_url" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $token"
+  -H "Authorization: Bearer $token" \
+  -d \
+  '{
+    "title": "Велосипед_'"$RANDOM"'",
+    "target_amount": '"$RANDOM"'
+  }'
 )
 
-# Проверяем, успешно ли получение
+# Проверяем, успешно ли создание
 if echo "$res" | jq -re '.error' 1>/dev/null 2>&1; then
     echo "$res" | jq 1>&2
     exit 1

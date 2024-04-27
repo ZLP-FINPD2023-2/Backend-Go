@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Base
+if ! source "${BASH_SOURCE%/*}/../base"; then
+  exit 1
+fi
+
+token=${USER_TOKEN:-$("${BASH_SOURCE%/*}"/../auth/login | jq -r '.token')}
+
+goal_id=${1:-$("${BASH_SOURCE%/*}"/../goal/list | jq -r '.[0].id')}
+
+# Отправляем POST-запрос для создания бюджета
+res=$(curl -s -X POST "$api_url/$budget_url" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $token" \
+  -d \
+  '{
+    "title": "Вклад_'"$RANDOM"'",
+    "goal_id": '"$goal_id"'
+  }'
+)
+
+# Проверяем, успешно ли создание
+if echo "$res" | jq -re '.error' 1>/dev/null 2>&1; then
+    echo "$res" | jq 1>&2
+    exit 1
+fi
+
+# Результат
+echo "$res" | jq

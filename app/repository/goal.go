@@ -34,50 +34,31 @@ func (r GoalRepository) Get(id, userID uint) (models.Goal, error) {
 	return goal, err
 }
 
-func (r GoalRepository) List(userID uint) ([]models.GoalCalc, error) {
-	var goals []models.GoalCalc
-	rows, err := r.Database.Raw("SELECT "+
-		"goals.id,"+
-		"goals.created_at,"+
-		"goals.updated_at,"+
-		"goals.deleted_at,"+
-		"goals.user_id,"+
-		"goals.title,"+
-		"COALESCE(SUM(t3.amount), 0) AS total_amount "+
-		"FROM goals "+
-		"JOIN "+
-		"(SELECT "+
-		"budgets.id,"+
-		"budgets.created_at,"+
-		"budgets.updated_at,"+
-		"budgets.deleted_at,"+
-		"budgets.user_id,"+
-		"budgets.title,"+
-		"budgets.goal,"+
-		"COALESCE(SUM(t1.amount), 0) - COALESCE(SUM(t2.amount), 0) AS amount "+
-		"FROM budgets "+
-		"LEFT JOIN "+
-		"(SELECT "+
-		"budget_to, "+
-		"SUM(amount) as amount "+
-		"FROM transactions GROUP BY budget_to) t1 ON budgets.id = t1.budget_to "+
-		"LEFT JOIN "+
-		"(SELECT "+
-		"budget_from, "+
-		"SUM(amount) as amount "+
-		"FROM transactions GROUP BY budget_from) t2 ON budgets.id = t2.budget_from "+
-		"WHERE "+
-		"budgets.user_id = ? GROUP BY budgets.id) t3 ON goals.id = t3.goal GROUP BY goals.id", userID).Rows()
-	if err != nil {
+func (r GoalRepository) List(userID uint) ([]models.Goal, error) {
+	var goals []models.Goal
+	if err := r.Database.Where("user_id = ?", userID).Find(&goals).Error; err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var temp models.GoalCalc
-		if err := r.Database.ScanRows(rows, &temp); err != nil {
-			return nil, err
-		}
-		goals = append(goals, temp)
+	return goals, nil
+}
+
+func (r GoalRepository) Create(goal *models.Goal) error {
+	return r.Database.Create(&goal).Error
+}
+
+func (r GoalRepository) Patch(goal models.Goal, id, userID uint) (models.Goal, error) {
+	var updateGoal models.Goal
+	err := r.Database.Model(&updateGoal).Where("user_id = ? AND id = ?", userID, id).Updates(&goal).Error
+	if err != nil {
+		return models.Goal{}, nil
 	}
-	return goals, err
+
+	if err := r.Database.Where("id = ? AND user_id = ?", id, userID).First(&updateGoal).Error; err != nil {
+		return models.Goal{}, err
+	}
+	return updateGoal, nil
+}
+
+func (r GoalRepository) Delete(id uint, userID uint) error {
+	return r.Database.Where("user_id = ?", userID).Delete(&models.Goal{}, id).Error
 }

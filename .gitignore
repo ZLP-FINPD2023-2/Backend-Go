@@ -1,7 +1,9 @@
-data
-test.db
-.idea
-migrations/sqlite
+.env
+
 docs
 vendor
+migrations/sqlite
+
+test.db
 .task
+.idea
