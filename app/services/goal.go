@@ -55,7 +55,7 @@ func (s GoalService) List(c *gin.Context, userID uint) ([]models.GoalCalcRespons
 		}
 		dateFrom = dateFromTemp
 	}
-	if dateToStr := c.Query("date_from"); dateToStr != "" {
+	if dateToStr := c.Query("date_to"); dateToStr != "" {
 		dateToTemp, err := time.Parse(constants.DateFormat, dateToStr)
 		if err != nil {
 			return nil, err
@@ -118,11 +118,33 @@ func (s GoalService) List(c *gin.Context, userID uint) ([]models.GoalCalcRespons
 			return dates[i].Before(dates[j])
 		})
 
-		currAmountState := g.Amounts[dateFrom.Format(constants.DateFormat)]
+		var (
+			currDate        time.Time
+			currAmountState = g.Amounts[dateFrom.Format(constants.DateFormat)]
+		)
+		if !dateFrom.IsZero() {
+			currDate = dateFrom
+		}
+
 		for _, v := range dates {
+			if !currDate.IsZero() {
+				for !currDate.Equal(v) && currDate.Before(v) {
+					currDate = currDate.Add(24 * time.Hour)
+					g.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
+				}
+			}
 			currAmountState = currAmountState.Add(changes[v])
 			g.Amounts[v.Format(constants.DateFormat)] = currAmountState
+			currDate = v
 		}
+
+		if !dateTo.IsZero() {
+			for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
+				currDate = currDate.Add(24 * time.Hour)
+				g.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
+			}
+		}
+
 		resp = append(resp, g)
 	}
 
@@ -150,7 +172,7 @@ func (s GoalService) Get(c *gin.Context, userID uint) (models.GoalCalcResponse, 
 		}
 		dateFrom = dateFromTemp
 	}
-	if dateToStr := c.Query("date_from"); dateToStr != "" {
+	if dateToStr := c.Query("date_to"); dateToStr != "" {
 		dateToTemp, err := time.Parse(constants.DateFormat, dateToStr)
 		if err != nil {
 			return models.GoalCalcResponse{}, err
@@ -211,10 +233,31 @@ func (s GoalService) Get(c *gin.Context, userID uint) (models.GoalCalcResponse, 
 		return dates[i].Before(dates[j])
 	})
 
-	currAmountState := resp.Amounts[dateFrom.Format(constants.DateFormat)]
+	var (
+		currDate        time.Time
+		currAmountState = resp.Amounts[dateFrom.Format(constants.DateFormat)]
+	)
+	if !dateFrom.IsZero() {
+		currDate = dateFrom
+	}
+
 	for _, v := range dates {
+		if !currDate.IsZero() {
+			for !currDate.Equal(v) && currDate.Before(v) {
+				currDate = currDate.Add(24 * time.Hour)
+				resp.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
+			}
+		}
 		currAmountState = currAmountState.Add(changes[v])
 		resp.Amounts[v.Format(constants.DateFormat)] = currAmountState
+		currDate = v
+	}
+
+	if !dateTo.IsZero() {
+		for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
+			currDate = currDate.Add(24 * time.Hour)
+			resp.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
+		}
 	}
 
 	return resp, nil
