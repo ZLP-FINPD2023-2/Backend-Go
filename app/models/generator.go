@@ -28,9 +28,14 @@ type GeneratorStoreRequest struct {
 }
 
 type GeneratorPatchRequest struct {
-	Title  string  `json:"title"`
-	Amount float64 `json:"amount" validate:"numeric"`
-	DateTo string  `json:"date_to"`
+	Title             string      `json:"title"`
+	Amount            float64     `json:"amount" validate:"numeric"`
+	Periodicity       Periodicity `json:"periodicity"`
+	PeriodicityFactor uint        `json:"periodicity_factor"`
+	BudgetFrom        *uint       `json:"budget_from"`
+	BudgetTo          *uint       `json:"budget_to"`
+	DateTo            string      `json:"date_to"`
+	DateFrom          string      `json:"date_from"`
 }
 
 type GeneratorResponse struct {

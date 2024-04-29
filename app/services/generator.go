@@ -133,9 +133,20 @@ func (gs GeneratorService) Update(c *gin.Context, generator models.GeneratorPatc
 		return models.GeneratorResponse{}, err
 	}
 
-	dateTo, err := time.Parse(constants.DateFormat, generator.DateTo)
-	if err != nil {
-		return models.GeneratorResponse{}, err
+	var dateTo time.Time
+	if generator.DateTo != "" {
+		dateTo, err = time.Parse(constants.DateFormat, generator.DateTo)
+		if err != nil {
+			return models.GeneratorResponse{}, err
+		}
+	}
+
+	var dateFrom time.Time
+	if generator.DateFrom != "" {
+		dateFrom, err = time.Parse(constants.DateFormat, generator.DateFrom)
+		if err != nil {
+			return models.GeneratorResponse{}, err
+		}
 	}
 
 	var amount decimal.Decimal
@@ -144,9 +155,14 @@ func (gs GeneratorService) Update(c *gin.Context, generator models.GeneratorPatc
 	}
 
 	gen := models.Generator{
-		Title:  generator.Title,
-		Amount: amount,
-		DateTo: &sql.NullTime{Time: dateTo, Valid: true},
+		Title:             generator.Title,
+		Amount:            amount,
+		Periodicity:       generator.Periodicity,
+		PeriodicityFactor: generator.PeriodicityFactor,
+		BudgetFrom:        convertBudgetIDToModel(generator.BudgetFrom),
+		BudgetTo:          convertBudgetIDToModel(generator.BudgetTo),
+		DateTo:            &sql.NullTime{Time: dateTo, Valid: true},
+		DateFrom:          dateFrom,
 	}
 
 	model, err := gs.repository.Update(gen, uint(id), userID)
