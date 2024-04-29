@@ -104,7 +104,7 @@ func (s TrxService) Get(c *gin.Context, userID uint) (models.TrxResponse, error)
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return models.TrxResponse{}, nil
+		return models.TrxResponse{}, err
 	}
 
 	trx, err := s.repository.Get(uint(id), userID)
@@ -131,17 +131,6 @@ func (s TrxService) Create(trxRequest *models.TrxRequest, userID uint) (models.T
 	}
 
 	amount := decimal.NewFromFloat(trxRequest.Amount)
-
-	// TODO: убрать этот позор, добавить foreign keys
-	/*_, err = s.budgetRepository.Get(trxRequest.BudgetTo, userID)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.budgetRepository.Get(trxRequest.BudgetFrom, userID)
-	if err != nil {
-		return err
-	}*/
 
 	transaction := models.Trx{
 		UserID: userID,

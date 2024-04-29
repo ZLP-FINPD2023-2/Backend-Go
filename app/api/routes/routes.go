@@ -15,6 +15,7 @@ var Module = fx.Options(
 	fx.Provide(NewGoalRoutes),
 	fx.Provide(NewBudgetRoutes),
 	fx.Provide(NewTrxRoutes),
+	fx.Provide(NewGeneratorRoutes),
 )
 
 // Routes contains multiple routes
@@ -33,6 +34,7 @@ func NewRoutes(
 	goalRoutes GoalRoutes,
 	budgetRoutes BudgetRoutes,
 	trxRoutes TrxRoutes,
+	generatorRoutes GeneratorRoutes,
 ) Routes {
 	return Routes{
 		docsRoutes,
@@ -41,6 +43,7 @@ func NewRoutes(
 		goalRoutes,
 		budgetRoutes,
 		trxRoutes,
+		generatorRoutes,
 	}
 }
 

@@ -9,4 +9,5 @@ var Module = fx.Options(
 	fx.Provide(NewGoalController),
 	fx.Provide(NewBudgetController),
 	fx.Provide(NewTrxController),
+	fx.Provide(NewGeneratorController),
 )
