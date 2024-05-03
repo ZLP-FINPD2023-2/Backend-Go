@@ -29,10 +29,10 @@ type BudgetPatchResponse struct {
 }
 
 type BudgetGetResponse struct {
-	Title   string                     `json:"title"`
-	ID      uint                       `json:"id"`
-	Goal    uint                       `json:"goal"`
-	Amounts map[string]decimal.Decimal `json:"amounts"`
+	Title   string             `json:"title"`
+	ID      uint               `json:"id"`
+	Goal    uint               `json:"goal"`
+	Amounts map[string]float64 `json:"amounts"`
 }
 
 type Budget struct {

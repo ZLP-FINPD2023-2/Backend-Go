@@ -61,7 +61,7 @@ func (tc TrxController) List(c *gin.Context) {
 		return
 	}
 
-	var trxResponses []models.TrxResponse
+	trxResponses := make([]models.TrxResponse, 0)
 	for _, trx := range trxs {
 		trxResponses = append(trxResponses, models.TrxResponse{
 			ID:         trx.ID,

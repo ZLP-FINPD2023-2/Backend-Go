@@ -96,6 +96,10 @@ func (bc BudgetController) List(c *gin.Context) {
 		return
 	}
 
+	if budgets == nil {
+		budgets = make([]models.BudgetGetResponse, 0)
+	}
+
 	c.JSON(http.StatusOK, budgets)
 }
 

@@ -96,16 +96,16 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 		ID:      budget.ID,
 		Goal:    budget.GoalID,
 		Title:   budget.Title,
-		Amounts: make(map[string]decimal.Decimal),
+		Amounts: make(map[string]float64),
 	}
 
 	var (
-		currAmount decimal.Decimal
+		currAmount float64
 		currDate   time.Time
 	)
 	if !dateFrom.IsZero() || !startAmount.Equal(decimal.Zero) {
-		resp.Amounts[dateFrom.Format(constants.DateFormat)] = startAmount
-		currAmount = startAmount
+		resp.Amounts[dateFrom.Format(constants.DateFormat)] = startAmount.InexactFloat64()
+		currAmount = startAmount.InexactFloat64()
 		currDate = dateFrom
 	}
 
@@ -116,7 +116,7 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 				resp.Amounts[currDate.Format(constants.DateFormat)] = currAmount
 			}
 		}
-		currAmount = currAmount.Add(change.AmountChange)
+		currAmount = currAmount + change.AmountChange.InexactFloat64()
 		resp.Amounts[change.Date.Format(constants.DateFormat)] = currAmount
 		currDate = change.Date
 	}
@@ -186,16 +186,16 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 			ID:      budget.ID,
 			Goal:    budget.GoalID,
 			Title:   budget.Title,
-			Amounts: make(map[string]decimal.Decimal),
+			Amounts: make(map[string]float64),
 		}
 
 		var (
-			currAmount decimal.Decimal
+			currAmount float64
 			currDate   time.Time
 		)
 		if !dateFrom.IsZero() || !startAmount.Equal(decimal.Zero) {
-			budg.Amounts[dateFrom.Format(constants.DateFormat)] = startAmount
-			currAmount = startAmount
+			budg.Amounts[dateFrom.Format(constants.DateFormat)] = startAmount.InexactFloat64()
+			currAmount = startAmount.InexactFloat64()
 			currDate = dateFrom
 		}
 
@@ -206,7 +206,7 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 					budg.Amounts[currDate.Format(constants.DateFormat)] = currAmount
 				}
 			}
-			currAmount = currAmount.Add(change.AmountChange)
+			currAmount = currAmount + change.AmountChange.InexactFloat64()
 			budg.Amounts[change.Date.Format(constants.DateFormat)] = currAmount
 			currDate = change.Date
 		}

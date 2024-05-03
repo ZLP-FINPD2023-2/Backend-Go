@@ -39,7 +39,7 @@ func NewGoalController(
 // @Produce json
 // @Param date_from query string false "Дата начала периода в формате 18-10-2004"
 // @Param date_to query string false "Дата окончания периода в формате 18-10-2004"
-// @Success 200 {array} models.GoalResponse
+// @Success 200 {array} models.GoalCalcResponse
 // @Router /goal [get]
 func (gc GoalController) List(c *gin.Context) {
 	userID, ok := c.Get(constants.UserID)
@@ -58,6 +58,10 @@ func (gc GoalController) List(c *gin.Context) {
 			"description": err.Error(),
 		})
 		return
+	}
+
+	if goals == nil {
+		goals = make([]models.GoalCalcResponse, 0)
 	}
 
 	c.JSON(http.StatusOK, goals)

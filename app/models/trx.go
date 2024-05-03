@@ -17,12 +17,12 @@ type TrxRequest struct {
 }
 
 type TrxResponse struct {
-	ID         uint            `json:"id"`
-	Title      string          `json:"title"`
-	Date       string          `json:"date"`
-	Amount     decimal.Decimal `json:"amount"`
-	BudgetFrom *uint           `json:"budget_from"`
-	BudgetTo   *uint           `json:"budget_to"`
+	ID         uint    `json:"id"`
+	Title      string  `json:"title"`
+	Date       string  `json:"date"`
+	Amount     float64 `json:"amount"`
+	BudgetFrom *uint   `json:"budget_from"`
+	BudgetTo   *uint   `json:"budget_to"`
 }
 
 type TrxPatchRequest struct {
