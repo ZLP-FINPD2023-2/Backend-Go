@@ -94,7 +94,7 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 
 	resp := models.BudgetGetResponse{
 		ID:      budget.ID,
-		Goal:    budget.GoalID,
+		Goal:    convertGoalIDToInt(budget.GoalID),
 		Title:   budget.Title,
 		Amounts: make(map[string]float64),
 	}
@@ -184,7 +184,7 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 
 		budg := models.BudgetGetResponse{
 			ID:      budget.ID,
-			Goal:    budget.GoalID,
+			Goal:    convertGoalIDToInt(budget.GoalID),
 			Title:   budget.Title,
 			Amounts: make(map[string]float64),
 		}
@@ -228,7 +228,7 @@ func (s BudgetService) Create(request *models.BudgetCreateRequest, userID uint) 
 	budget := models.Budget{
 		UserID: userID,
 		Title:  request.Title,
-		GoalID: request.Goal,
+		GoalID: convertGoalIDFromInt(request.Goal),
 	}
 
 	if err := s.repository.Create(&budget); err != nil {
@@ -238,7 +238,7 @@ func (s BudgetService) Create(request *models.BudgetCreateRequest, userID uint) 
 	newBudget := models.BudgetCreateResponse{
 		ID:     budget.ID,
 		Title:  budget.Title,
-		GoadID: budget.GoalID,
+		GoadID: convertGoalIDToInt(budget.GoalID),
 	}
 
 	return newBudget, nil
@@ -256,7 +256,7 @@ func (s BudgetService) Patch(c *gin.Context, budget models.BudgetPatchRequest, u
 
 	updateBudget := models.Budget{
 		Title:  budget.Title,
-		GoalID: budget.Goal,
+		GoalID: convertGoalIDFromInt(budget.Goal),
 	}
 
 	budgetDB, err := s.repository.Patch(&updateBudget, uint(id), userID)
@@ -267,7 +267,7 @@ func (s BudgetService) Patch(c *gin.Context, budget models.BudgetPatchRequest, u
 	resp := models.BudgetPatchResponse{
 		ID:    budgetDB.ID,
 		Title: budgetDB.Title,
-		Goal:  budgetDB.GoalID,
+		Goal:  convertGoalIDToInt(budgetDB.GoalID),
 	}
 
 	return resp, nil
@@ -284,4 +284,26 @@ func (s BudgetService) Delete(c *gin.Context, userID uint) error {
 	}
 
 	return s.repository.Delete(uint(id), userID)
+}
+
+func convertGoalIDToInt(goal *sql.NullInt64) *uint {
+	if goal == nil {
+		return nil
+	}
+	var id uint
+	if goal.Valid {
+		id = uint(goal.Int64)
+		return &id
+	}
+	return nil
+}
+
+func convertGoalIDFromInt(id *uint) *sql.NullInt64 {
+	if id != nil {
+		return &sql.NullInt64{
+			Int64: int64(*id),
+			Valid: true,
+		}
+	}
+	return &sql.NullInt64{}
 }
