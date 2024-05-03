@@ -91,7 +91,7 @@ func (s TrxService) List(c *gin.Context, userID uint) ([]models.TrxResponse, err
 			ID:         trx.ID,
 			Title:      trx.Title,
 			Date:       trx.Date.Format(constants.DateFormat),
-			Amount:     trx.Amount,
+			Amount:     trx.Amount.InexactFloat64(),
 			BudgetFrom: convertBudgetID(trx.BudgetFrom),
 			BudgetTo:   convertBudgetID(trx.BudgetTo),
 		})
@@ -116,7 +116,7 @@ func (s TrxService) Get(c *gin.Context, userID uint) (models.TrxResponse, error)
 		ID:         trx.ID,
 		Title:      trx.Title,
 		Date:       trx.Date.Format(constants.DateFormat),
-		Amount:     trx.Amount,
+		Amount:     trx.Amount.InexactFloat64(),
 		BudgetFrom: convertBudgetID(trx.BudgetFrom),
 		BudgetTo:   convertBudgetID(trx.BudgetTo),
 	}
@@ -166,7 +166,7 @@ func (s TrxService) Create(trxRequest *models.TrxRequest, userID uint) (models.T
 		ID:         transaction.ID,
 		Title:      transaction.Title,
 		Date:       transaction.Date.Format(constants.DateFormat),
-		Amount:     transaction.Amount,
+		Amount:     transaction.Amount.InexactFloat64(),
 		BudgetFrom: convertBudgetID(transaction.BudgetFrom),
 		BudgetTo:   convertBudgetID(transaction.BudgetTo),
 	}
@@ -204,7 +204,7 @@ func (s TrxService) Patch(c *gin.Context, transaction models.TrxPatchRequest, us
 		ID:         trxUpdate.ID,
 		Title:      trxUpdate.Title,
 		Date:       trxUpdate.Date.Format(constants.DateFormat),
-		Amount:     trxUpdate.Amount,
+		Amount:     trxUpdate.Amount.InexactFloat64(),
 		BudgetFrom: convertBudgetID(trxUpdate.BudgetFrom),
 		BudgetTo:   convertBudgetID(trxUpdate.BudgetTo),
 	}

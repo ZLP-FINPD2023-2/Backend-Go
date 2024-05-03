@@ -100,6 +100,10 @@ func (gc GeneratorController) List(c *gin.Context) {
 		return
 	}
 
+	if resp == nil {
+		resp = make([]models.GeneratorResponse, 0)
+	}
+
 	c.JSON(http.StatusOK, resp)
 }
 

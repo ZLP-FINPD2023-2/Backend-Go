@@ -39,15 +39,15 @@ type GeneratorPatchRequest struct {
 }
 
 type GeneratorResponse struct {
-	ID                uint            `json:"id"`
-	Title             string          `json:"title"`
-	Amount            decimal.Decimal `json:"amount"`
-	Periodicity       Periodicity     `json:"periodicity"`
-	PeriodicityFactor uint            `json:"periodicity_factor"`
-	BudgetFrom        *uint           `json:"budget_from"`
-	BudgetTo          *uint           `json:"budget_to"`
-	DateFrom          string          `json:"date_from"`
-	DateTo            *string         `json:"date_to"`
+	ID                uint        `json:"id"`
+	Title             string      `json:"title"`
+	Amount            float64     `json:"amount"`
+	Periodicity       Periodicity `json:"periodicity"`
+	PeriodicityFactor uint        `json:"periodicity_factor"`
+	BudgetFrom        *uint       `json:"budget_from"`
+	BudgetTo          *uint       `json:"budget_to"`
+	DateFrom          string      `json:"date_from"`
+	DateTo            *string     `json:"date_to"`
 }
 
 type Generator struct {

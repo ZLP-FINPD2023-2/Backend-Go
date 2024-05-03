@@ -63,7 +63,7 @@ func (gs GeneratorService) Store(generator models.GeneratorStoreRequest, userID 
 	resp := models.GeneratorResponse{
 		ID:                model.ID,
 		Title:             model.Title,
-		Amount:            model.Amount,
+		Amount:            model.Amount.InexactFloat64(),
 		Periodicity:       model.Periodicity,
 		PeriodicityFactor: model.PeriodicityFactor,
 		BudgetFrom:        convertBudgetIDFromModel(model.BudgetFrom),
@@ -86,7 +86,7 @@ func (gs GeneratorService) List(userID uint) ([]models.GeneratorResponse, error)
 		gen := models.GeneratorResponse{
 			ID:                v.ID,
 			Title:             v.Title,
-			Amount:            v.Amount,
+			Amount:            v.Amount.InexactFloat64(),
 			Periodicity:       v.Periodicity,
 			PeriodicityFactor: v.PeriodicityFactor,
 			BudgetFrom:        convertBudgetIDFromModel(v.BudgetFrom),
@@ -114,7 +114,7 @@ func (gs GeneratorService) Get(c *gin.Context, userID uint) (models.GeneratorRes
 	resp := models.GeneratorResponse{
 		ID:                gen.ID,
 		Title:             gen.Title,
-		Amount:            gen.Amount,
+		Amount:            gen.Amount.InexactFloat64(),
 		Periodicity:       gen.Periodicity,
 		PeriodicityFactor: gen.PeriodicityFactor,
 		BudgetFrom:        convertBudgetIDFromModel(gen.BudgetFrom),
@@ -173,7 +173,7 @@ func (gs GeneratorService) Update(c *gin.Context, generator models.GeneratorPatc
 	resp := models.GeneratorResponse{
 		ID:                model.ID,
 		Title:             model.Title,
-		Amount:            model.Amount,
+		Amount:            model.Amount.InexactFloat64(),
 		Periodicity:       model.Periodicity,
 		PeriodicityFactor: model.PeriodicityFactor,
 		BudgetFrom:        convertBudgetIDFromModel(model.BudgetFrom),
