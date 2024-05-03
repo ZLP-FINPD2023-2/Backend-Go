@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+# Base
+if ! source "${BASH_SOURCE%/*}/../../base"; then
+  exit 1
+fi
+
+token=${USER_TOKEN:-$("${BASH_SOURCE%/*}"/../../auth/login | jq -r '.token')}
+
+budget_from_id=${1:-null}
+budget_to_id=${2:-$("${BASH_SOURCE%/*}"/../../budget/list | jq -r '.[0].id')}
+
+# Отправляем POST-запрос для создания генератора транзакций
+res=$(curl -s -X POST "$api_url/$generator_url" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $token" \
+  -d \
+  '{
+    "title": "ЗП",
+    "amount": '"$RANDOM"',
+    "periodicity": "monthly",
+    "periodicity_factor": 1,
+    "date_from": "05-03-2024",
+    "date_to": "10-03-2025",
+    "budget_from": '"$budget_from_id"',
+    "budget_to": '"$budget_to_id"'
+  }'
+)
+
+# Проверяем, успешно ли создание
+if echo "$res" | jq -re '.error' 1>/dev/null 2>&1; then
+    echo "$res" | jq 1>&2
+    exit 1
+fi
+
+# Результат
+echo "$res" | jq
