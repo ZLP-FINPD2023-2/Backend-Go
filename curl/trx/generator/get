@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# Base
+if ! source "${BASH_SOURCE%/*}/../../base"; then
+  exit 1
+fi
+
+token=${USER_TOKEN:-$("${BASH_SOURCE%/*}"/../../auth/login | jq -r '.token')}
+
+generator_id=${1:-$("${BASH_SOURCE%/*}"/list | jq -r '.[0].id')}
+
+# Отправляем GET-запрос для получения генератора транзакций
+res=$(curl -s -X GET "$api_url/$generator_url/$generator_id" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $token"
+)
+
+# Проверяем, успешно ли получение
+if echo "$res" | jq -re '.error' 1>/dev/null 2>&1; then
+    echo "$res" | jq 1>&2
+    exit 1
+fi
+
+# Результат
+echo "$res" | jq
