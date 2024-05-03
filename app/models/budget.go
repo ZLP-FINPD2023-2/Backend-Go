@@ -9,7 +9,7 @@ import (
 
 type BudgetCreateRequest struct {
 	Title string `json:"title" validate:"required"`
-	Goal  *uint  `json:"goal_id" validate:"required"`
+	Goal  *uint  `json:"goal_id"`
 }
 
 type BudgetCreateResponse struct {
@@ -45,11 +45,11 @@ type Budget struct {
 	Goal   Goal `gorm:"foreignKey:GoalID"`
 }
 
+func (b Budget) TableName() string {
+	return "budgets"
+}
+
 type BudgetChanges struct {
 	AmountChange decimal.Decimal
 	Date         time.Time
-}
-
-func (b Budget) TableName() string {
-	return "budgets"
 }

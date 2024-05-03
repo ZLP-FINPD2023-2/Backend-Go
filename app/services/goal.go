@@ -130,18 +130,21 @@ func (s GoalService) List(c *gin.Context, userID uint) ([]models.GoalCalcRespons
 			if !currDate.IsZero() {
 				for !currDate.Equal(v) && currDate.Before(v) {
 					currDate = currDate.Add(24 * time.Hour)
-					g.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
+					g.Amounts[currDate.Format(constants.DateFormat)] =
+						g.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
 				}
 			}
 			currAmountState = currAmountState + changes[v].InexactFloat64()
-			g.Amounts[v.Format(constants.DateFormat)] = currAmountState
+			g.Amounts[currDate.Format(constants.DateFormat)] =
+				g.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
 			currDate = v
 		}
 
 		if !dateTo.IsZero() {
 			for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
 				currDate = currDate.Add(24 * time.Hour)
-				g.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
+				g.Amounts[currDate.Format(constants.DateFormat)] =
+					g.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
 			}
 		}
 
@@ -245,18 +248,21 @@ func (s GoalService) Get(c *gin.Context, userID uint) (models.GoalCalcResponse, 
 		if !currDate.IsZero() {
 			for !currDate.Equal(v) && currDate.Before(v) {
 				currDate = currDate.Add(24 * time.Hour)
-				resp.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
+				resp.Amounts[currDate.Format(constants.DateFormat)] =
+					resp.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
 			}
 		}
 		currAmountState = currAmountState + changes[v].InexactFloat64()
-		resp.Amounts[v.Format(constants.DateFormat)] = currAmountState
+		resp.Amounts[currDate.Format(constants.DateFormat)] =
+			resp.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
 		currDate = v
 	}
 
 	if !dateTo.IsZero() {
 		for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
 			currDate = currDate.Add(24 * time.Hour)
-			resp.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
+			resp.Amounts[currDate.Format(constants.DateFormat)] =
+				resp.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
 		}
 	}
 
