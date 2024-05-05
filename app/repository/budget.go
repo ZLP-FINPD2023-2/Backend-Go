@@ -71,71 +71,70 @@ func (r BudgetRepository) GetBudgetAmount(budgetID, userID uint, date time.Time)
 	}
 
 	var (
-		genTo   models.Generator
-		genFrom models.Generator
+		genTo   []models.Generator
+		genFrom []models.Generator
 	)
 	if err := r.Database.Where("user_id = ? AND budget_to = ?",
 		userID,
-		budgetID).First(&genTo).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		budgetID).Find(&genTo).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return decimal.Decimal{}, err
 	}
 
-	if !genTo.DateFrom.IsZero() {
+	for _, gen := range genTo {
 		var (
-			currDate = genTo.DateFrom
-			lastDate time.Time
+			currDate = gen.DateFrom
+			lastDate = date
 			dayAdd   int
 			monthAdd int
 			yearAdd  int
 		)
 
-		switch genTo.Periodicity {
+		switch gen.Periodicity {
 		case models.PeriodicityDaily:
-			dayAdd, monthAdd, yearAdd = int(genTo.PeriodicityFactor), 0, 0
+			dayAdd = int(gen.PeriodicityFactor)
 		case models.PeriodicityMonthly:
-			dayAdd, monthAdd, yearAdd = 0, int(genTo.PeriodicityFactor), 0
+			monthAdd = int(gen.PeriodicityFactor)
 		case models.PeriodicityYearly:
-			dayAdd, monthAdd, yearAdd = 0, 0, int(genTo.PeriodicityFactor)
+			yearAdd = int(gen.PeriodicityFactor)
 		}
 
 		for currDate.Before(lastDate) || currDate.Equal(lastDate) {
-			amount = amount.Add(genTo.Amount)
+			amount = amount.Add(gen.Amount)
 			currDate = currDate.AddDate(yearAdd, monthAdd, dayAdd)
 		}
-
 	}
 
 	if err := r.Database.Where("user_id = ? AND budget_from = ?",
 		userID,
-		budgetID).First(&genFrom).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		budgetID).Find(&genFrom).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return decimal.Decimal{}, err
 	}
-	if !genFrom.DateFrom.IsZero() {
+	for _, gen := range genFrom {
 		var (
-			currDate = genFrom.DateFrom
-			lastDate time.Time
+			currDate = gen.DateFrom
+			lastDate = date
 			dayAdd   int
 			monthAdd int
 			yearAdd  int
 		)
 
-		switch genFrom.Periodicity {
+		switch gen.Periodicity {
 		case models.PeriodicityDaily:
-			dayAdd, monthAdd, yearAdd = int(genFrom.PeriodicityFactor), 0, 0
+			dayAdd = int(gen.PeriodicityFactor)
 		case models.PeriodicityMonthly:
-			dayAdd, monthAdd, yearAdd = 0, int(genFrom.PeriodicityFactor), 0
+			monthAdd = int(gen.PeriodicityFactor)
 		case models.PeriodicityYearly:
-			dayAdd, monthAdd, yearAdd = 0, 0, int(genFrom.PeriodicityFactor)
+			yearAdd = int(gen.PeriodicityFactor)
 		}
 
-		if genFrom.DateTo.Time.IsZero() || genFrom.DateTo.Time.After(date) {
+		if gen.DateTo.Time.IsZero() || gen.DateTo.Time.After(date) {
 			lastDate = date
 		} else {
-			lastDate = genFrom.DateTo.Time
+			lastDate = gen.DateTo.Time
 		}
 
 		for currDate.Before(lastDate) || currDate.Equal(lastDate) {
-			amount = amount.Sub(genFrom.Amount)
+			amount = amount.Sub(gen.Amount)
 			currDate = currDate.AddDate(yearAdd, monthAdd, dayAdd)
 		}
 	}
