@@ -113,18 +113,21 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 		if !currDate.IsZero() {
 			for !currDate.Equal(change.Date) && currDate.Before(change.Date) {
 				currDate = currDate.Add(24 * time.Hour)
-				resp.Amounts[currDate.Format(constants.DateFormat)] = currAmount
+				resp.Amounts[currDate.Format(constants.DateFormat)] =
+					resp.Amounts[currDate.Format(constants.DateFormat)] + currAmount
 			}
 		}
 		currAmount = currAmount + change.AmountChange.InexactFloat64()
-		resp.Amounts[change.Date.Format(constants.DateFormat)] = currAmount
+		resp.Amounts[currDate.Format(constants.DateFormat)] =
+			resp.Amounts[currDate.Format(constants.DateFormat)] + currAmount
 		currDate = change.Date
 	}
 
 	if !dateTo.IsZero() {
 		for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
 			currDate = currDate.Add(24 * time.Hour)
-			resp.Amounts[currDate.Format(constants.DateFormat)] = currAmount
+			resp.Amounts[currDate.Format(constants.DateFormat)] =
+				resp.Amounts[currDate.Format(constants.DateFormat)] + currAmount
 		}
 	}
 
@@ -203,18 +206,21 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 			if !currDate.IsZero() {
 				for !currDate.Equal(change.Date) && currDate.Before(change.Date) {
 					currDate = currDate.Add(24 * time.Hour)
-					budg.Amounts[currDate.Format(constants.DateFormat)] = currAmount
+					budg.Amounts[currDate.Format(constants.DateFormat)] =
+						budg.Amounts[currDate.Format(constants.DateFormat)] + currAmount
 				}
 			}
 			currAmount = currAmount + change.AmountChange.InexactFloat64()
-			budg.Amounts[change.Date.Format(constants.DateFormat)] = currAmount
+			budg.Amounts[currDate.Format(constants.DateFormat)] =
+				budg.Amounts[currDate.Format(constants.DateFormat)] + currAmount
 			currDate = change.Date
 		}
 
 		if !dateTo.IsZero() {
 			for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
 				currDate = currDate.Add(24 * time.Hour)
-				budg.Amounts[currDate.Format(constants.DateFormat)] = currAmount
+				budg.Amounts[currDate.Format(constants.DateFormat)] =
+					budg.Amounts[currDate.Format(constants.DateFormat)] + currAmount
 			}
 		}
 

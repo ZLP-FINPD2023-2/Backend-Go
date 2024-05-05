@@ -11,15 +11,15 @@ import (
 type Periodicity string
 
 const (
-	PeriodicityDaily   Periodicity = "Daily"
-	PeriodicityMonthly Periodicity = "Monthly"
-	PeriodicityYearly  Periodicity = "Yearly"
+	PeriodicityDaily   Periodicity = "daily"
+	PeriodicityMonthly Periodicity = "monthly"
+	PeriodicityYearly  Periodicity = "yearly"
 )
 
 type GeneratorStoreRequest struct {
 	Title             string      `json:"title"`
 	Amount            float64     `json:"amount" validate:"numeric"`
-	Periodicity       Periodicity `json:"periodicity"`
+	Periodicity       Periodicity `json:"periodicity" validate:"periodicity"`
 	PeriodicityFactor uint        `json:"periodicity_factor"`
 	BudgetFrom        *uint       `json:"budget_from"`
 	BudgetTo          *uint       `json:"budget_to"`
@@ -30,7 +30,7 @@ type GeneratorStoreRequest struct {
 type GeneratorPatchRequest struct {
 	Title             string      `json:"title"`
 	Amount            float64     `json:"amount" validate:"numeric"`
-	Periodicity       Periodicity `json:"periodicity"`
+	Periodicity       Periodicity `json:"periodicity" validate:"periodicity"`
 	PeriodicityFactor uint        `json:"periodicity_factor"`
 	BudgetFrom        *uint       `json:"budget_from"`
 	BudgetTo          *uint       `json:"budget_to"`

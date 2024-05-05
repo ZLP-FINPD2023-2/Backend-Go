@@ -1,12 +1,14 @@
 package repository
 
 import (
-	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
+	"errors"
 	"time"
 
 	"finapp/lib"
 	"finapp/models"
+
+	"github.com/shopspring/decimal"
+	"gorm.io/gorm"
 )
 
 type BudgetRepository struct {
@@ -68,6 +70,76 @@ func (r BudgetRepository) GetBudgetAmount(budgetID, userID uint, date time.Time)
 		return decimal.Decimal{}, err
 	}
 
+	var (
+		genTo   models.Generator
+		genFrom models.Generator
+	)
+	if err := r.Database.Where("user_id = ? AND budget_to = ?",
+		userID,
+		budgetID).First(&genTo).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return decimal.Decimal{}, err
+	}
+
+	if !genTo.DateFrom.IsZero() {
+		var (
+			currDate = genTo.DateFrom
+			lastDate time.Time
+			dayAdd   int
+			monthAdd int
+			yearAdd  int
+		)
+
+		switch genTo.Periodicity {
+		case models.PeriodicityDaily:
+			dayAdd, monthAdd, yearAdd = int(genTo.PeriodicityFactor), 0, 0
+		case models.PeriodicityMonthly:
+			dayAdd, monthAdd, yearAdd = 0, int(genTo.PeriodicityFactor), 0
+		case models.PeriodicityYearly:
+			dayAdd, monthAdd, yearAdd = 0, 0, int(genTo.PeriodicityFactor)
+		}
+
+		for currDate.Before(lastDate) || currDate.Equal(lastDate) {
+			amount = amount.Add(genTo.Amount)
+			currDate = currDate.AddDate(yearAdd, monthAdd, dayAdd)
+		}
+
+	}
+
+	if err := r.Database.Where("user_id = ? AND budget_from = ?",
+		userID,
+		budgetID).First(&genFrom).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return decimal.Decimal{}, err
+	}
+	if !genFrom.DateFrom.IsZero() {
+		var (
+			currDate = genFrom.DateFrom
+			lastDate time.Time
+			dayAdd   int
+			monthAdd int
+			yearAdd  int
+		)
+
+		switch genFrom.Periodicity {
+		case models.PeriodicityDaily:
+			dayAdd, monthAdd, yearAdd = int(genFrom.PeriodicityFactor), 0, 0
+		case models.PeriodicityMonthly:
+			dayAdd, monthAdd, yearAdd = 0, int(genFrom.PeriodicityFactor), 0
+		case models.PeriodicityYearly:
+			dayAdd, monthAdd, yearAdd = 0, 0, int(genFrom.PeriodicityFactor)
+		}
+
+		if genFrom.DateTo.Time.IsZero() || genFrom.DateTo.Time.After(date) {
+			lastDate = date
+		} else {
+			lastDate = genFrom.DateTo.Time
+		}
+
+		for currDate.Before(lastDate) || currDate.Equal(lastDate) {
+			amount = amount.Sub(genFrom.Amount)
+			currDate = currDate.AddDate(yearAdd, monthAdd, dayAdd)
+		}
+	}
+
 	return amount, nil
 }
 
@@ -84,6 +156,98 @@ func (r TrxRepository) GetBudgetChanges(budgetID, userID uint, dateFrom, dateTo 
 	if err := query.Group("date").Find(&changes).Error; err != nil {
 		return nil, err
 	}
+
+	if dateTo.IsZero() {
+		for _, v := range changes {
+			if v.Date.After(dateTo) {
+				dateTo = v.Date
+			}
+		}
+	}
+
+	var (
+		genTo   []models.Generator
+		genFrom []models.Generator
+	)
+	if err := r.Database.Where("user_id = ? AND budget_to = ?",
+		userID,
+		budgetID).Find(&genTo).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	if err := r.Database.Where("user_id = ? AND budget_from = ?",
+		userID,
+		budgetID).Find(&genFrom).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	for _, gen := range genTo {
+		var (
+			currDate = gen.DateFrom
+			lastDate time.Time
+			dayAdd   int
+			monthAdd int
+			yearAdd  int
+		)
+
+		if !gen.DateTo.Time.IsZero() && dateTo.After(gen.DateTo.Time) {
+			lastDate = gen.DateTo.Time
+		} else {
+			lastDate = dateTo
+		}
+
+		switch gen.Periodicity {
+		case models.PeriodicityDaily:
+			dayAdd = int(gen.PeriodicityFactor)
+		case models.PeriodicityMonthly:
+			monthAdd = int(gen.PeriodicityFactor)
+		case models.PeriodicityYearly:
+			yearAdd = int(gen.PeriodicityFactor)
+		}
+
+		for currDate.Before(dateFrom) {
+			currDate = currDate.AddDate(yearAdd, monthAdd, dayAdd)
+		}
+
+		for currDate.Before(lastDate) || currDate.Equal(lastDate) {
+			changes = append(changes, models.BudgetChanges{AmountChange: gen.Amount, Date: currDate})
+			currDate = currDate.AddDate(yearAdd, monthAdd, dayAdd)
+		}
+	}
+
+	for _, gen := range genFrom {
+		var (
+			currDate = gen.DateFrom
+			lastDate time.Time
+			dayAdd   int
+			monthAdd int
+			yearAdd  int
+		)
+
+		if !gen.DateTo.Time.IsZero() && dateTo.After(gen.DateTo.Time) {
+			lastDate = gen.DateTo.Time
+		} else {
+			lastDate = dateTo
+		}
+
+		switch gen.Periodicity {
+		case models.PeriodicityDaily:
+			dayAdd = int(gen.PeriodicityFactor)
+		case models.PeriodicityMonthly:
+			monthAdd = int(gen.PeriodicityFactor)
+		case models.PeriodicityYearly:
+			yearAdd = int(gen.PeriodicityFactor)
+		}
+
+		for currDate.Before(dateFrom) {
+			currDate = currDate.AddDate(yearAdd, monthAdd, dayAdd)
+		}
+
+		for currDate.Before(lastDate) || currDate.Equal(lastDate) {
+			changes = append(changes, models.BudgetChanges{AmountChange: gen.Amount.Neg(), Date: currDate})
+			currDate = currDate.AddDate(yearAdd, monthAdd, dayAdd)
+		}
+	}
+
 	return changes, nil
 }
 
