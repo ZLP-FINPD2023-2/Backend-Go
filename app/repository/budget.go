@@ -166,42 +166,42 @@ func (r TrxRepository) GetBudgetChanges(budgetID, userID uint, dateFrom, dateTo 
 	}
 
 	var (
-		genTo   models.Generator
-		genFrom models.Generator
+		genTo   []models.Generator
+		genFrom []models.Generator
 	)
 	if err := r.Database.Where("user_id = ? AND budget_to = ?",
 		userID,
-		budgetID).First(&genTo).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		budgetID).Find(&genTo).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
 	if err := r.Database.Where("user_id = ? AND budget_from = ?",
 		userID,
-		budgetID).First(&genFrom).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		budgetID).Find(&genFrom).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
 
-	if !genTo.DateFrom.IsZero() {
+	for _, gen := range genTo {
 		var (
-			currDate = genTo.DateFrom
+			currDate = gen.DateFrom
 			lastDate time.Time
 			dayAdd   int
 			monthAdd int
 			yearAdd  int
 		)
 
-		if !genTo.DateTo.Time.IsZero() && dateTo.After(genTo.DateTo.Time) {
-			lastDate = genTo.DateTo.Time
+		if !gen.DateTo.Time.IsZero() && dateTo.After(gen.DateTo.Time) {
+			lastDate = gen.DateTo.Time
 		} else {
 			lastDate = dateTo
 		}
 
-		switch genTo.Periodicity {
+		switch gen.Periodicity {
 		case models.PeriodicityDaily:
-			dayAdd, monthAdd, yearAdd = int(genTo.PeriodicityFactor), 0, 0
+			dayAdd = int(gen.PeriodicityFactor)
 		case models.PeriodicityMonthly:
-			dayAdd, monthAdd, yearAdd = 0, int(genTo.PeriodicityFactor), 0
+			monthAdd = int(gen.PeriodicityFactor)
 		case models.PeriodicityYearly:
-			dayAdd, monthAdd, yearAdd = 0, 0, int(genTo.PeriodicityFactor)
+			yearAdd = int(gen.PeriodicityFactor)
 		}
 
 		for currDate.Before(dateFrom) {
@@ -209,33 +209,33 @@ func (r TrxRepository) GetBudgetChanges(budgetID, userID uint, dateFrom, dateTo 
 		}
 
 		for currDate.Before(lastDate) || currDate.Equal(lastDate) {
-			changes = append(changes, models.BudgetChanges{AmountChange: genTo.Amount, Date: currDate})
+			changes = append(changes, models.BudgetChanges{AmountChange: gen.Amount, Date: currDate})
 			currDate = currDate.AddDate(yearAdd, monthAdd, dayAdd)
 		}
 	}
 
-	if !genFrom.DateFrom.IsZero() {
+	for _, gen := range genFrom {
 		var (
-			currDate = genFrom.DateFrom
+			currDate = gen.DateFrom
 			lastDate time.Time
 			dayAdd   int
 			monthAdd int
 			yearAdd  int
 		)
 
-		if !genTo.DateTo.Time.IsZero() && dateTo.After(genTo.DateTo.Time) {
-			lastDate = genTo.DateTo.Time
+		if !gen.DateTo.Time.IsZero() && dateTo.After(gen.DateTo.Time) {
+			lastDate = gen.DateTo.Time
 		} else {
 			lastDate = dateTo
 		}
 
-		switch genFrom.Periodicity {
+		switch gen.Periodicity {
 		case models.PeriodicityDaily:
-			dayAdd, monthAdd, yearAdd = int(genFrom.PeriodicityFactor), 0, 0
+			dayAdd = int(gen.PeriodicityFactor)
 		case models.PeriodicityMonthly:
-			dayAdd, monthAdd, yearAdd = 0, int(genFrom.PeriodicityFactor), 0
+			monthAdd = int(gen.PeriodicityFactor)
 		case models.PeriodicityYearly:
-			dayAdd, monthAdd, yearAdd = 0, 0, int(genFrom.PeriodicityFactor)
+			yearAdd = int(gen.PeriodicityFactor)
 		}
 
 		for currDate.Before(dateFrom) {
@@ -243,7 +243,7 @@ func (r TrxRepository) GetBudgetChanges(budgetID, userID uint, dateFrom, dateTo 
 		}
 
 		for currDate.Before(lastDate) || currDate.Equal(lastDate) {
-			changes = append(changes, models.BudgetChanges{AmountChange: genFrom.Amount.Neg(), Date: currDate})
+			changes = append(changes, models.BudgetChanges{AmountChange: gen.Amount.Neg(), Date: currDate})
 			currDate = currDate.AddDate(yearAdd, monthAdd, dayAdd)
 		}
 	}
