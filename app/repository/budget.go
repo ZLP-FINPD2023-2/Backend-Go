@@ -83,7 +83,7 @@ func (r BudgetRepository) GetBudgetAmount(budgetID, userID uint, date time.Time)
 	for _, gen := range genTo {
 		var (
 			currDate = gen.DateFrom
-			lastDate = date
+			lastDate time.Time
 			dayAdd   int
 			monthAdd int
 			yearAdd  int
@@ -96,6 +96,12 @@ func (r BudgetRepository) GetBudgetAmount(budgetID, userID uint, date time.Time)
 			monthAdd = int(gen.PeriodicityFactor)
 		case models.PeriodicityYearly:
 			yearAdd = int(gen.PeriodicityFactor)
+		}
+
+		if gen.DateTo.Time.IsZero() || gen.DateTo.Time.After(date) {
+			lastDate = date
+		} else {
+			lastDate = gen.DateTo.Time
 		}
 
 		for currDate.Before(lastDate) || currDate.Equal(lastDate) {
@@ -112,7 +118,7 @@ func (r BudgetRepository) GetBudgetAmount(budgetID, userID uint, date time.Time)
 	for _, gen := range genFrom {
 		var (
 			currDate = gen.DateFrom
-			lastDate = date
+			lastDate time.Time
 			dayAdd   int
 			monthAdd int
 			yearAdd  int

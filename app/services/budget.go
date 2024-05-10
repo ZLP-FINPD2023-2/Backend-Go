@@ -3,17 +3,18 @@ package services
 import (
 	"database/sql"
 	"errors"
-	"finapp/constants"
-	"github.com/gin-gonic/gin"
-	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"strconv"
 	"time"
 
+	"finapp/constants"
 	"finapp/domains"
 	"finapp/lib"
 	"finapp/models"
 	"finapp/repository"
+
+	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 )
 
 type BudgetService struct {
@@ -111,23 +112,21 @@ func (s BudgetService) Get(c *gin.Context, userID uint) (models.BudgetGetRespons
 
 	for _, change := range changes {
 		if !currDate.IsZero() {
-			for !currDate.Equal(change.Date) && currDate.Before(change.Date) {
+			for currDate.Before(change.Date) {
 				currDate = currDate.Add(24 * time.Hour)
 				resp.Amounts[currDate.Format(constants.DateFormat)] =
 					resp.Amounts[currDate.Format(constants.DateFormat)] + currAmount
 			}
 		}
 		currAmount = currAmount + change.AmountChange.InexactFloat64()
-		resp.Amounts[currDate.Format(constants.DateFormat)] =
-			resp.Amounts[currDate.Format(constants.DateFormat)] + currAmount
+		resp.Amounts[currDate.Format(constants.DateFormat)] = currAmount
 		currDate = change.Date
 	}
 
 	if !dateTo.IsZero() {
 		for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
 			currDate = currDate.Add(24 * time.Hour)
-			resp.Amounts[currDate.Format(constants.DateFormat)] =
-				resp.Amounts[currDate.Format(constants.DateFormat)] + currAmount
+			resp.Amounts[currDate.Format(constants.DateFormat)] = currAmount
 		}
 	}
 
@@ -204,23 +203,21 @@ func (s BudgetService) List(c *gin.Context, userID uint) ([]models.BudgetGetResp
 
 		for _, change := range changes {
 			if !currDate.IsZero() {
-				for !currDate.Equal(change.Date) && currDate.Before(change.Date) {
+				for currDate.Before(change.Date) {
 					currDate = currDate.Add(24 * time.Hour)
 					budg.Amounts[currDate.Format(constants.DateFormat)] =
 						budg.Amounts[currDate.Format(constants.DateFormat)] + currAmount
 				}
 			}
 			currAmount = currAmount + change.AmountChange.InexactFloat64()
-			budg.Amounts[currDate.Format(constants.DateFormat)] =
-				budg.Amounts[currDate.Format(constants.DateFormat)] + currAmount
+			budg.Amounts[currDate.Format(constants.DateFormat)] = currAmount
 			currDate = change.Date
 		}
 
 		if !dateTo.IsZero() {
 			for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
 				currDate = currDate.Add(24 * time.Hour)
-				budg.Amounts[currDate.Format(constants.DateFormat)] =
-					budg.Amounts[currDate.Format(constants.DateFormat)] + currAmount
+				budg.Amounts[currDate.Format(constants.DateFormat)] = currAmount
 			}
 		}
 

@@ -3,18 +3,19 @@ package services
 import (
 	"database/sql"
 	"errors"
-	"finapp/constants"
-	"github.com/gin-gonic/gin"
-	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 	"sort"
 	"strconv"
 	"time"
 
+	"finapp/constants"
 	"finapp/domains"
 	"finapp/lib"
 	"finapp/models"
 	"finapp/repository"
+
+	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
+	"gorm.io/gorm"
 )
 
 type GoalService struct {
@@ -128,23 +129,21 @@ func (s GoalService) List(c *gin.Context, userID uint) ([]models.GoalCalcRespons
 
 		for _, v := range dates {
 			if !currDate.IsZero() {
-				for !currDate.Equal(v) && currDate.Before(v) {
+				for currDate.Before(v) {
 					currDate = currDate.Add(24 * time.Hour)
 					g.Amounts[currDate.Format(constants.DateFormat)] =
 						g.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
 				}
 			}
 			currAmountState = currAmountState + changes[v].InexactFloat64()
-			g.Amounts[currDate.Format(constants.DateFormat)] =
-				g.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
+			g.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
 			currDate = v
 		}
 
 		if !dateTo.IsZero() {
 			for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
 				currDate = currDate.Add(24 * time.Hour)
-				g.Amounts[currDate.Format(constants.DateFormat)] =
-					g.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
+				g.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
 			}
 		}
 
@@ -246,23 +245,21 @@ func (s GoalService) Get(c *gin.Context, userID uint) (models.GoalCalcResponse, 
 
 	for _, v := range dates {
 		if !currDate.IsZero() {
-			for !currDate.Equal(v) && currDate.Before(v) {
+			for currDate.Before(v) {
 				currDate = currDate.Add(24 * time.Hour)
 				resp.Amounts[currDate.Format(constants.DateFormat)] =
 					resp.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
 			}
 		}
 		currAmountState = currAmountState + changes[v].InexactFloat64()
-		resp.Amounts[currDate.Format(constants.DateFormat)] =
-			resp.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
+		resp.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
 		currDate = v
 	}
 
 	if !dateTo.IsZero() {
 		for !currDate.Equal(dateTo) && currDate.Before(dateTo) {
 			currDate = currDate.Add(24 * time.Hour)
-			resp.Amounts[currDate.Format(constants.DateFormat)] =
-				resp.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
+			resp.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
 		}
 	}
 
