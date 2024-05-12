@@ -10,7 +10,7 @@ import (
 
 type TrxRequest struct {
 	Title      string  `json:"title"`
-	Date       string  `json:"date" validate:"required,isNotFutureDate"`
+	Date       string  `json:"date" validate:"required"`
 	Amount     float64 `json:"amount" validate:"required,numeric"`
 	BudgetFrom *uint   `json:"budget_from"`
 	BudgetTo   *uint   `json:"budget_to"`

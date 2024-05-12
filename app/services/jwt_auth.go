@@ -52,7 +52,7 @@ func (s JWTAuthService) Authorize(tokenString string) (bool, error) {
 // CreateToken creates jwt auth token
 func (s JWTAuthService) CreateToken(user *models.User) (string, error) {
 	unixTime := time.Now().Unix()
-	tokenExp := unixTime + 60*60
+	tokenExp := unixTime + 60*60*24
 
 	claims := models.TokenClaims{
 		UserID: user.ID,
