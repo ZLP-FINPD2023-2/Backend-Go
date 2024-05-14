@@ -5,7 +5,7 @@ app:
   imageName: ghcr.io/zlp-finpd2023-2/backend-go:dev
   secret: change_me
   mode: release
-  replicas: 2
+  replicas: 1
 
 db:
   host: db
