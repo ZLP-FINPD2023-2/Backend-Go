@@ -20,6 +20,8 @@ services:
     image: postgres:alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - ${DB_PORT}:${DB_PORT}
     env_file:
       - path: .env
         required: true

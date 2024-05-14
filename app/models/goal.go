@@ -28,17 +28,17 @@ type GoalStoreRequest struct {
 }
 
 type GoalCalcResponse struct {
-	ID           uint                       `json:"id"`
-	Title        string                     `json:"title"`
-	Amounts      map[string]decimal.Decimal `json:"amount"`
-	TargetAmount decimal.Decimal            `json:"target_amount"`
+	ID           uint               `json:"id"`
+	Title        string             `json:"title"`
+	Amounts      map[string]float64 `json:"amount"`
+	TargetAmount float64            `json:"target_amount"`
 }
 
 // / Get
 type GoalResponse struct {
-	ID           uint            `json:"id"`
-	Title        string          `json:"title"`
-	TargetAmount decimal.Decimal `json:"target_amount"`
+	ID           uint    `json:"id"`
+	Title        string  `json:"title"`
+	TargetAmount float64 `json:"target_amount"`
 }
 
 // Update

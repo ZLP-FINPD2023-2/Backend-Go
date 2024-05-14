@@ -3,18 +3,19 @@ package services
 import (
 	"database/sql"
 	"errors"
-	"finapp/constants"
-	"github.com/gin-gonic/gin"
-	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 	"sort"
 	"strconv"
 	"time"
 
+	"finapp/constants"
 	"finapp/domains"
 	"finapp/lib"
 	"finapp/models"
 	"finapp/repository"
+
+	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
+	"gorm.io/gorm"
 )
 
 type GoalService struct {
@@ -82,8 +83,8 @@ func (s GoalService) List(c *gin.Context, userID uint) ([]models.GoalCalcRespons
 		g := models.GoalCalcResponse{
 			ID:           goal.ID,
 			Title:        goal.Title,
-			TargetAmount: goal.TargetAmount,
-			Amounts:      make(map[string]decimal.Decimal),
+			TargetAmount: goal.TargetAmount.InexactFloat64(),
+			Amounts:      make(map[string]float64),
 		}
 
 		changes := make(map[time.Time]decimal.Decimal)
@@ -97,7 +98,7 @@ func (s GoalService) List(c *gin.Context, userID uint) ([]models.GoalCalcRespons
 			}
 			if !dateFrom.IsZero() {
 				g.Amounts[dateFrom.Format(constants.DateFormat)] =
-					g.Amounts[dateFrom.Format(constants.DateFormat)].Add(amount)
+					g.Amounts[dateFrom.Format(constants.DateFormat)] + amount.InexactFloat64()
 			}
 
 			budgetChanges, err := s.trxRepository.GetBudgetChanges(v.ID, userID, dateFrom, dateTo)
@@ -128,13 +129,14 @@ func (s GoalService) List(c *gin.Context, userID uint) ([]models.GoalCalcRespons
 
 		for _, v := range dates {
 			if !currDate.IsZero() {
-				for !currDate.Equal(v) && currDate.Before(v) {
+				for currDate.Before(v) {
 					currDate = currDate.Add(24 * time.Hour)
-					g.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
+					g.Amounts[currDate.Format(constants.DateFormat)] =
+						g.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
 				}
 			}
-			currAmountState = currAmountState.Add(changes[v])
-			g.Amounts[v.Format(constants.DateFormat)] = currAmountState
+			currAmountState = currAmountState + changes[v].InexactFloat64()
+			g.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
 			currDate = v
 		}
 
@@ -197,8 +199,8 @@ func (s GoalService) Get(c *gin.Context, userID uint) (models.GoalCalcResponse, 
 	resp := models.GoalCalcResponse{
 		ID:           goal.ID,
 		Title:        goal.Title,
-		TargetAmount: goal.TargetAmount,
-		Amounts:      make(map[string]decimal.Decimal),
+		TargetAmount: goal.TargetAmount.InexactFloat64(),
+		Amounts:      make(map[string]float64),
 	}
 
 	changes := make(map[time.Time]decimal.Decimal)
@@ -212,7 +214,7 @@ func (s GoalService) Get(c *gin.Context, userID uint) (models.GoalCalcResponse, 
 		}
 		if !dateFrom.IsZero() {
 			resp.Amounts[dateFrom.Format(constants.DateFormat)] =
-				resp.Amounts[dateFrom.Format(constants.DateFormat)].Add(amount)
+				resp.Amounts[dateFrom.Format(constants.DateFormat)] + amount.InexactFloat64()
 		}
 
 		budgetChanges, err := s.trxRepository.GetBudgetChanges(v.ID, userID, dateFrom, dateTo)
@@ -243,13 +245,14 @@ func (s GoalService) Get(c *gin.Context, userID uint) (models.GoalCalcResponse, 
 
 	for _, v := range dates {
 		if !currDate.IsZero() {
-			for !currDate.Equal(v) && currDate.Before(v) {
+			for currDate.Before(v) {
 				currDate = currDate.Add(24 * time.Hour)
-				resp.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
+				resp.Amounts[currDate.Format(constants.DateFormat)] =
+					resp.Amounts[currDate.Format(constants.DateFormat)] + currAmountState
 			}
 		}
-		currAmountState = currAmountState.Add(changes[v])
-		resp.Amounts[v.Format(constants.DateFormat)] = currAmountState
+		currAmountState = currAmountState + changes[v].InexactFloat64()
+		resp.Amounts[currDate.Format(constants.DateFormat)] = currAmountState
 		currDate = v
 	}
 
@@ -279,7 +282,7 @@ func (s GoalService) Store(request *models.GoalStoreRequest, userID uint) (model
 	resp := models.GoalResponse{
 		ID:           goal.ID,
 		Title:        goal.Title,
-		TargetAmount: goal.TargetAmount,
+		TargetAmount: goal.TargetAmount.InexactFloat64(),
 	}
 
 	return resp, nil
@@ -314,7 +317,7 @@ func (s GoalService) Update(c *gin.Context, req models.GoalUpdateRequest, userID
 	resp := models.GoalResponse{
 		ID:           updateGoal.ID,
 		Title:        updateGoal.Title,
-		TargetAmount: updateGoal.TargetAmount,
+		TargetAmount: updateGoal.TargetAmount.InexactFloat64(),
 	}
 	return resp, nil
 }

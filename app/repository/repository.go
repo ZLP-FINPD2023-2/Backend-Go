@@ -8,4 +8,5 @@ var Module = fx.Options(
 	fx.Provide(NewTrxRepository),
 	fx.Provide(NewBudgetRepository),
 	fx.Provide(NewGoalRepository),
+	fx.Provide(NewGeneratorRepository),
 )

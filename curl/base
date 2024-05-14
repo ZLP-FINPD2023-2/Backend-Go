@@ -8,6 +8,7 @@ export login_url="auth/login"
 export goal_url="goal"
 export budget_url="budget"
 export trx_url="trx"
+export generator_url="trx/generator"
 
 # Проверка доступности сервера
 if ! curl "$api_url/$health_url" 1>/dev/null 2>&1; then
@@ -20,5 +21,5 @@ export user_password=${USER_PASSWORD:-"password${RANDOM}"}
 export user_email=${USER_EMAIL:-"user${RANDOM}@example.com"}
 
 # Переменные
-export date_from="10-03-2024"
-export date_to="13-03-2024"
+export date_from=${DATE_FROM:-"10-03-2024"}
+export date_to=${DATE_TO:-"13-03-2024"}

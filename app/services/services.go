@@ -9,4 +9,5 @@ var Module = fx.Options(
 	fx.Provide(NewTrxService),
 	fx.Provide(NewBudgetService),
 	fx.Provide(NewGoalService),
+	fx.Provide(NewGeneratorService),
 )

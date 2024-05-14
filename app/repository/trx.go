@@ -56,10 +56,12 @@ func (r TrxRepository) List(userID uint, dateFrom, dateTo time.Time, minAmount, 
 	if !dateTo.Equal(time.Time{}) {
 		query = query.Where("date <= ?", dateTo)
 	}
-	if !maxAmount.Equal(decimal.Zero) {
+	if !maxAmount.IsZero() {
 		query = query.Where("amount <= ?", maxAmount)
 	}
-	query = query.Where("amount >= ?", minAmount)
+	if !minAmount.IsZero() {
+		query = query.Where("amount >= ?", minAmount)
+	}
 	err := query.Find(&trxs).Error
 	return trxs, err
 }
